@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Collections;
@@ -83,11 +83,46 @@ namespace UnityStandardAssets.Vehicles.Car
 
             }
             Node goalN=DroneGraph.FindClosestNode(goal_pos, DroneGraph);
+
+
+
+	/* GENERATE INITIAL POSITION NODES FOR CAR (FIND THE CLOSEST NODE TO THE CAR, THERE IS ARLEADY A FUNCTION FOR THAT)*/
+	List<List<int>> car_targets = new List<List<int>> ();
+	/* GENERATE PERMUTATION OF INTERESTING NODES */
+	List<List<int>> best_path = new List<List<int>>();
+
+    double best_cost=99999999999;
+
+	/* FIX THE START POINT = 0 IN A * */
+	    int NUMBER_OF_CARS=3; 
+	    int start_idx = 0;
             int goal_idx = goalN.getId();
             List<int> path = new List<int>();
             //paths=dfs(DroneGraph, goal_idx);
-            ASuperStar(DroneGraph, goal_idx);
-            path = getBestPath(DroneGraph, goal_idx);
+     /*RUN MULTIPLE TIME  A_START FOR ALL THE CAR, FOR ALL THE INTERESTING POINTS */
+     time=0;
+        while(time<100000){
+            double this_cost=0;
+            List<List<int>> this_path = new List<List<int>>();
+	        for ( int c=0; c<NUMBER_OF_CARS; c++){ //For all the car 
+		        for(int i=0;i<car_targets[c].size()-1;i++){        //for all the interesting points of that car   
+                
+                    start_idx = car_targets[c][i];
+                    goal_idx = car_targets[c][i+1];
+			        ASuperStar(DroneGraph,start_idx, goal_idx);
+                    path=path.Concat(getBestPath(DroneGraph,start_idx, goal_idx)).ToList(); // ADD To the real path, the path to get the ith point 
+
+                }
+                this_cost += computePathCost(DroneGraph, path);
+                this_path[c] = new List<int>(path) //copy the path
+              }
+              if(this_cost<best_cost){
+                    best_cost = this_cost;
+                    best_path = new List<List<int>>(this_path);
+              }
+              time++
+         }
+	/*SUM COST OF A STAR */
 
 
             Vector3 old_wp = start_pos;
@@ -479,14 +514,14 @@ namespace UnityStandardAssets.Vehicles.Car
                 nodes[C].setTheta(0);
 
             }
-            public double computePathCost(List<int> _path)
+            public double computePathCost(Graph G,List<int> _path)
             {
-                setPathTheta(_path); //Compute the angles of the nodes of that path
-
                 double cost = 0;
-                //Compute the max_speed that we can use to reach each node
-                //compte the time space / speed for the path
+                for( int i=0;i<_path.size()-1;i++){
+                    cost += Vector3.Distance(G.getNode(_path[i]).getPosition(), G.getNode(_path[i]).getPosition())
+                }
                 return cost;
+
             }
 
 
@@ -616,12 +651,12 @@ namespace UnityStandardAssets.Vehicles.Car
             return paths;
         }
 
-        public List<int> getBestPath(Graph G,int idx_goal)
+        public List<int> getBestPath(Graph G,int, idx_start,int idx_goal)
         {
             List<int> path = new List<int>();
             path.Add(idx_goal);
             int idx = idx_goal;
-            while( idx != 0)
+            while( idx != idx_start)
             {
                 idx = G.getNode(idx).getParent();
                 path.Add(idx);
@@ -653,7 +688,7 @@ namespace UnityStandardAssets.Vehicles.Car
                 }
             }
         }
-        public void ASuperStar(Graph G, int idx_goal)
+        public void ASuperStar(Graph G,int start_pos int idx_goal)
         {
             priorityQueue Q = new priorityQueue();
 
@@ -663,7 +698,7 @@ namespace UnityStandardAssets.Vehicles.Car
 
 
             float total_cost;
-            Q.enqueue(0, 0);
+            Q.enqueue(start_pos, 0);
 
             while(Q.getSize()!=0)
             {
@@ -831,7 +866,13 @@ namespace UnityStandardAssets.Vehicles.Car
             }
         }
 
+        public List<List<int>> generatePermutation(int n , List<int> v){
 
+            List<int> cars;
+
+            
+
+        }
 
 
     }
