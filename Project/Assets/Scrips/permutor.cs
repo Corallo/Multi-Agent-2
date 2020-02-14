@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-namespace perm {
+
     public class permutor {
 
         public List<List<int>> permute(int amountOfCars, List<int> nodeList) {
@@ -13,8 +13,7 @@ namespace perm {
             int length = nodeList.Count;
             int last = length - 1; // Permutes the nodeList
             // MARCUS I AM INIZIALIZING AMOUNT TO 100 BECAUSE I DON'T KNOW WHAT IT IS, CHECK IT PLS
-            int amount = 100;
-            for (int i = 0; i < amount; i++) {
+            for (int i = 0; i < length; i++) {
                 int rand = UnityEngine.Random.Range(i, length);
                 int temp = nodeList[i];
                 nodeList[i] = nodeList[rand];
@@ -51,4 +50,3 @@ namespace perm {
             return permutedList;
         }
     }
-}

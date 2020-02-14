@@ -19,6 +19,9 @@ public class TerrainManager : MonoBehaviour {
     void Start()
     {
 
+        Planner p = new Planner();
+
+        p.ComputePath();
     }
 
     // Use this for initialization
