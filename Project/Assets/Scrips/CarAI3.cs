@@ -42,13 +42,13 @@ namespace UnityStandardAssets.Vehicles.Car
 		private void Start()
 		{
             // get the car controller
-
+            terrain_manager = terrain_manager_game_object.GetComponent<TerrainManager>();
             foreach (GameObject obj in enemies)
             {
                 Debug.DrawLine(transform.position, obj.transform.position, Color.black, 10f);
             }
 
-            
+
             // Plan your path here
             // ...
         }

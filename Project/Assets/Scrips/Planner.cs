@@ -8,7 +8,9 @@ using System.Threading.Tasks;
 using MyGraph;
 using UnityStandardAssets.Vehicles.Car;
 
-public class Planner  : MonoBehaviour
+[RequireComponent(typeof(CarController))]
+
+public class Planner  
 {
 	private CarController m_Car; // the car controller we want to use
 
@@ -36,11 +38,11 @@ public class Planner  : MonoBehaviour
 	public float newAngle = 0;
 	private Boolean backing = false;
 
-	public void ComputePath()
+	public void ComputePath(TerrainManager _terrain_manager)
 	{
 		//TerrainManager t = terrain_manager.GetComponent<TerrainManager>();
 		//terrain_manager = t;
-		terrain_manager = terrain_manager_game_object.GetComponent<TerrainManager>();
+		terrain_manager = _terrain_manager.GetComponent<TerrainManager>();
 		//terrain_manager = new TerrainManager();
 
 		// note that both arrays will have holes when objects are destroyed
@@ -94,10 +96,10 @@ public class Planner  : MonoBehaviour
 			//Debug.Log(strings);
 
 		}
-			// Node goalN = DroneGraph.FindClosestNode(goal_pos, DroC: \Users\delli\Desktop\KTH\MultiAgent\Multi - Agent - 2 - master\Multi - Agent - 2 - master\Project\Assets\Scrips\CarAI1.csneGraph);
+		// Node goalN = DroneGraph.FindClosestNode(goal_pos, DroC: \Users\delli\Desktop\KTH\MultiAgent\Multi - Agent - 2 - master\Multi - Agent - 2 - master\Project\Assets\Scrips\CarAI1.csneGraph);
 
 
-
+	
 		/* GENERATE INITIAL POSITION NODES FOR CAR (FIND THE CLOSEST NODE TO THE CAR, THERE IS ARLEADY A FUNCTION FOR THAT)*/
 		List<List<int>> car_targets = new List<List<int>>();
 		/* GENERATE PERMUTATION OF INTERESTING NODES */
@@ -127,6 +129,7 @@ public class Planner  : MonoBehaviour
 		var strings = string.Join(", ", point_of_interest);
 		Debug.Log(strings);
 		permutor p = new permutor();
+		List<List<int>> this_path = new List<List<int>>();
 		while (time < 10)
 		{
 			car_targets = p.permute(friends.Length, point_of_interest);
@@ -137,7 +140,7 @@ public class Planner  : MonoBehaviour
 				Debug.Log(strings);
 				}
 			double this_cost = 0;
-			List<List<int>> this_path = new List<List<int>>();
+			this_path.Clear();
 			for (int c = 0; c < NUMBER_OF_CARS; c++)
 			{ //For all the car 
 				path.Clear();
@@ -151,7 +154,7 @@ public class Planner  : MonoBehaviour
 
 				}
 				this_cost += computePathCost(DroneGraph, path);
-				this_path[c] = new List<int>(path); //copy the path
+				this_path.Add( new List<int>(path)); //copy the path
 
 			}
 			if (this_cost < best_cost)
@@ -291,7 +294,7 @@ public class Planner  : MonoBehaviour
 
 	public void RRG(int max_nodes, Graph G)
 	{
-		float edgeLength = 10.0f;
+		float edgeLength = 8.0f;
 		float nodeMinDistance = 2.5f;
 		float addEdgeMaxLength = 15.0f;
 
@@ -389,12 +392,17 @@ public class Planner  : MonoBehaviour
 		List<int> path = new List<int>();
 		path.Add(idx_goal);
 		int idx = idx_goal;
+		Debug.Log("Following path from A star");
 		while (idx != idx_start)
 		{
 			idx = G.getNode(idx).getParent();
 			path.Add(idx);
+			Debug.Log(idx);
 		}
 		path.Reverse();
+		Debug.Log("Path found:");
+		var strings = string.Join(", ", path);
+		Debug.Log(strings);
 		return path;
 	}
 
@@ -425,10 +433,13 @@ public class Planner  : MonoBehaviour
 	{
 		priorityQueue Q = new priorityQueue();
 
-
+		for( int i = 0; i< G.getSize(); i++)
+		{
+			G.setColorOfNode(i, 0);
+		} 
 		int best_node;
 		float best_cost;
-
+		Debug.Log("RUNNING A STAR!"+ start_pos.ToString() +" " + idx_goal.ToString());
 
 		float total_cost;
 		Q.enqueue(start_pos, 0);
@@ -442,6 +453,7 @@ public class Planner  : MonoBehaviour
 
 			if (idx_goal == best_node)
 			{
+				Debug.Log("path found");
 				return;
 			}
 
@@ -471,6 +483,7 @@ public class Planner  : MonoBehaviour
 			}
 		}
 
+		Debug.Log("path not found!!!!");
 
 	}
 
