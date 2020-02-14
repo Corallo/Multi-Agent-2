@@ -13,7 +13,7 @@ using UnityStandardAssets.Vehicles.Car;
 public class Planner  
 {
 	private CarController m_Car; // the car controller we want to use
-
+	LayerMask mask;
 	public GameObject terrain_manager_game_object;
 	TerrainManager terrain_manager;
 
@@ -40,6 +40,10 @@ public class Planner
 
 	public void ComputePath(TerrainManager _terrain_manager)
 	{
+		 float maxVel = 20f;
+		 float maxAcc = 3f;
+		float constAcc = 0.1f;
+		mask = ~LayerMask.GetMask("Player"); 
 		//TerrainManager t = terrain_manager.GetComponent<TerrainManager>();
 		//terrain_manager = t;
 		terrain_manager = _terrain_manager.GetComponent<TerrainManager>();
@@ -72,6 +76,8 @@ public class Planner
 		int n = 3000;
 		RRG(n, DroneGraph);
 		killFuckers(DroneGraph);
+
+
 		computeDiStanceToWall(DroneGraph);
 		for (int i = 0; i < DroneGraph.getSize(); i++)
 		{
@@ -88,7 +94,7 @@ public class Planner
 			cube.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
 			for (int j = 0; j < DroneGraph.getAdjList(i).Count; j++)
 			{
-				Debug.DrawLine(DroneGraph.getNode(i).getPosition(), DroneGraph.getNode(DroneGraph.getAdjList(i)[j]).getPosition(), Color.red, 100f);
+				Debug.DrawLine(DroneGraph.getNode(i).getPosition(), DroneGraph.getNode(DroneGraph.getAdjList(i)[j]).getPosition(), Color.red, 10f);
 				//Debug.Log(DroneGraph.getNode(i).getPosition() +" - "+ DroneGraph.getNode(j).getPosition());
 			}
 			//Debug.Log("Adj list of node " + i.ToString());
@@ -97,7 +103,7 @@ public class Planner
 
 		}
 		// Node goalN = DroneGraph.FindClosestNode(goal_pos, DroC: \Users\delli\Desktop\KTH\MultiAgent\Multi - Agent - 2 - master\Multi - Agent - 2 - master\Project\Assets\Scrips\CarAI1.csneGraph);
-
+	
 
 	
 		/* GENERATE INITIAL POSITION NODES FOR CAR (FIND THE CLOSEST NODE TO THE CAR, THERE IS ARLEADY A FUNCTION FOR THAT)*/
@@ -139,11 +145,15 @@ public class Planner
 				strings = string.Join(", ", l);
 				Debug.Log(strings);
 				}
-			double this_cost = 0;
+			List<double> this_cost = new List<double>();
 			this_path.Clear();
 			for (int c = 0; c < NUMBER_OF_CARS; c++)
 			{ //For all the car 
 				path.Clear();
+				if (car_targets[c].Count == 1)
+				{
+					path.Add(car_targets[c][0]);
+				}
 				for (int i = 0; i < car_targets[c].Count - 1; i++)
 				{        //for all the interesting points of that car   
 
@@ -153,22 +163,47 @@ public class Planner
 					path.AddRange(getBestPath(DroneGraph, start_idx, goal_idx)); // ADD To the real path, the path to get the ith point 
 
 				}
-				this_cost += computePathCost(DroneGraph, path);
+				this_cost.Add(computePathCost(DroneGraph, path));
 				this_path.Add( new List<int>(path)); //copy the path
-
+				//Debug.Log(this_cost[c]);
 			}
-			if (this_cost < best_cost)
+			double real_cost = 0;
+			foreach (var x in this_cost)
 			{
-				best_cost = this_cost;
+				real_cost += Math.Abs(x- this_cost.Average());
+			}
+
+			real_cost *= (0.75);
+			real_cost += this_cost.Sum();
+			Debug.Log("Cost for this path:" + real_cost.ToString() + " : "+ this_cost.Sum().ToString() +" "+ (real_cost- this_cost.Sum()).ToString());
+			foreach (var l in this_path)
+			{
+				strings = string.Join(", ", l);
+				Debug.Log(strings);
+			}
+			if (real_cost < best_cost)
+			{
+				Debug.Log("Found a better solution");
+				best_cost = real_cost;
 				best_path = new List<List<int>>(this_path);
 			}
 			time++;
 
+			
+			int j = 0;
+			foreach ( var car in friends)
+			{
+				
+				//car.GetComponent<CarAI3>().trajectory = car.GetComponent<CarAI3>().myController.makeTrajectory(myRealPath, maxVel / 2.236f, maxAcc); ;
+				//car.GetComponent<CarAI3>().lastPointInPath = best_path[j][0];
+				car.GetComponent<CarAI3>().my_path = pathHelp(DroneGraph, best_path[j]);
+				j++;
+			}
 		}
 		/*SUM COST OF A STAR */
 
 
-		Vector3 old_wp = start_pos;
+		Vector3 old_wp = DroneGraph.getNode(best_path[0][0]).getPosition();
 		Debug.Log("Printing space now");
 		foreach (var wp in best_path[0])
 		{
@@ -176,16 +211,20 @@ public class Planner
 			Debug.DrawLine(old_wp, DroneGraph.getNode(wp).getPosition(), Color.cyan, 100f);
 			old_wp = DroneGraph.getNode(wp).getPosition();
 		}
+
+		old_wp = DroneGraph.getNode(best_path[1][0]).getPosition();
 		foreach (var wp in best_path[1])
 		{
 			//Debug.Log(Vector3.Distance(old_wp, DroneGraph.getNode(wp).getPosition()));
 			Debug.DrawLine(old_wp, DroneGraph.getNode(wp).getPosition(), Color.yellow, 100f);
 			old_wp = DroneGraph.getNode(wp).getPosition();
 		}
+		old_wp = DroneGraph.getNode(best_path[2][0]).getPosition();
+
 		foreach (var wp in best_path[2])
 		{
 			//Debug.Log(Vector3.Distance(old_wp, DroneGraph.getNode(wp).getPosition()));
-			Debug.DrawLine(old_wp, DroneGraph.getNode(wp).getPosition(), Color.red, 100f);
+			Debug.DrawLine(old_wp, DroneGraph.getNode(wp).getPosition(), Color.blue, 100f);
 			old_wp = DroneGraph.getNode(wp).getPosition();
 		}
 
@@ -227,7 +266,7 @@ public class Planner
 		to.y = 3;
 
 		RaycastHit rayHit;
-		bool hit = Physics.SphereCast(from, Margin, to - from, out rayHit, Vector3.Distance(from, to));
+		bool hit = Physics.SphereCast(from, Margin, to - from, out rayHit, Vector3.Distance(from, to),mask);
 		if (hit)
 		{
 			return true;
@@ -285,7 +324,7 @@ public class Planner
 		double cost = 0;
 		for (int i = 0; i < _path.Count - 1; i++)
 		{
-			cost += Vector3.Distance(G.getNode(_path[i]).getPosition(), G.getNode(_path[i]).getPosition());
+			cost += Vector3.Distance(G.getNode(_path[i]).getPosition(), G.getNode(_path[i+1]).getPosition());
 
 		}
 		return cost;
@@ -294,9 +333,9 @@ public class Planner
 
 	public void RRG(int max_nodes, Graph G)
 	{
-		float edgeLength = 8.0f;
+		float edgeLength = 6.0f;
 		float nodeMinDistance = 2.5f;
-		float addEdgeMaxLength = 15.0f;
+		float addEdgeMaxLength = 8.0f;
 
 
 		int max_iter = 10000;
@@ -392,17 +431,25 @@ public class Planner
 		List<int> path = new List<int>();
 		path.Add(idx_goal);
 		int idx = idx_goal;
-		Debug.Log("Following path from A star");
+		//Debug.Log("Following path from A star");
 		while (idx != idx_start)
 		{
+			if (G.getNode(idx).getParent() == -1)
+			{
+				Debug.Log("I am in node" + idx.ToString());
+			}
 			idx = G.getNode(idx).getParent();
 			path.Add(idx);
-			Debug.Log(idx);
+			if (path.Count > 10000)
+			{
+				Debug.Log("OMG WTF?");
+				break;
+			}
 		}
 		path.Reverse();
-		Debug.Log("Path found:");
-		var strings = string.Join(", ", path);
-		Debug.Log(strings);
+		//Debug.Log("Path found:");
+		//var strings = string.Join(", ", path);
+		//Debug.Log(strings);
 		return path;
 	}
 
@@ -436,13 +483,16 @@ public class Planner
 		for( int i = 0; i< G.getSize(); i++)
 		{
 			G.setColorOfNode(i, 0);
-		} 
+			G.getNode(i).setParent(-1);
+		}
+		G.setColorOfNode(start_pos, 1);
 		int best_node;
 		float best_cost;
-		Debug.Log("RUNNING A STAR!"+ start_pos.ToString() +" " + idx_goal.ToString());
+		//Debug.Log("RUNNING A STAR!"+ start_pos.ToString() +" " + idx_goal.ToString());
 
 		float total_cost;
 		Q.enqueue(start_pos, 0);
+		
 
 		while (Q.getSize() != 0)
 		{
@@ -453,7 +503,7 @@ public class Planner
 
 			if (idx_goal == best_node)
 			{
-				Debug.Log("path found");
+				//Debug.Log("path found");
 				return;
 			}
 
@@ -547,7 +597,8 @@ public class Planner
 		float best_angle = 0;
 		float max_speed = 15;
 		float alpha = 1 / 10;
-
+		float zero = 0;
+		float k = 1/zero ;
 		foreach (var n in G.getAdjList(child))
 		{
 			actual_angle = computeAngle2(G.getNode(parent), G.getNode(child), G.getNode(n));
@@ -556,13 +607,17 @@ public class Planner
 				best_angle = actual_angle;
 			}
 		}
-		max_speed = 1 / (1 + ((180 - best_angle) * alpha) * ((180 - best_angle) * alpha) * ((180 - best_angle) * alpha) * ((180 - best_angle) * alpha));
+		//max_speed = 1 / (1 + ((180 - best_angle) * alpha) * ((180 - best_angle) * alpha) * ((180 - best_angle) * alpha) * ((180 - best_angle) * alpha));
 		//max_speed = 15;
-		real_cost = Vector3.Distance(G.getNode(parent).getPosition(), G.getNode(child).getPosition()) / max_speed; /// max_speed;
+		real_cost = Vector3.Distance(G.getNode(parent).getPosition(), G.getNode(child).getPosition()); // max_speed; /// max_speed;
 
+		
+		
+		
+		//real_cost = Math.Max(real_cost, k * (real_cost - 10));
 
 		RaycastHit rayHit;
-		bool hit = Physics.SphereCast(G.getNode(child).getPosition(), Margin, G.getNode(goal).getPosition() - G.getNode(child).getPosition(), out rayHit, Vector3.Distance(G.getNode(child).getPosition(), G.getNode(goal).getPosition()));
+		bool hit = Physics.SphereCast(G.getNode(child).getPosition(), Margin, G.getNode(goal).getPosition() - G.getNode(child).getPosition(), out rayHit, Vector3.Distance(G.getNode(child).getPosition(), G.getNode(goal).getPosition()),mask);
 		if (!hit)
 		{
 			h_cost = 0;
@@ -598,7 +653,7 @@ public class Planner
 			float actualDistance;
 			for (int j = 0; j < radiusHelpMatrix.Count; j++)
 			{
-				Physics.SphereCast(G.getNode(i).getPosition(), 2, radiusHelpMatrix[j], out hit, 50f);
+				Physics.SphereCast(G.getNode(i).getPosition(), 2, radiusHelpMatrix[j], out hit, 50f,mask);
 				actualDistance = hit.distance;
 				if (actualDistance != 0)
 				{
