@@ -18,10 +18,9 @@ public class TerrainManager : MonoBehaviour {
     // Use this for initialization
     void Start()
     {
-
         Planner p = new Planner();
 
-        p.ComputePath();
+        p.ComputePath(this);
     }
 
     // Use this for initialization
@@ -33,6 +32,7 @@ public class TerrainManager : MonoBehaviour {
         myInfo = TerrainInfo.CreateFromJSON(jsonTextFile.text);
 
         myInfo.CreateCubes();
+ 
 
 
         // this code is used to create new terrains and obstacles
@@ -44,7 +44,7 @@ public class TerrainManager : MonoBehaviour {
         Instantiate(flag, myInfo.start_pos, Quaternion.identity);
         Instantiate(flag, myInfo.goal_pos, Quaternion.identity);
 
-
+ 
 
     }
 
