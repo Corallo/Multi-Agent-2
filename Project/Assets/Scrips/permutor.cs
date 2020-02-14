@@ -12,7 +12,6 @@ using UnityEngine;
             CarIndices.Add(nodeList[2]);
             int length = nodeList.Count;
             int last = length - 1; // Permutes the nodeList
-            // MARCUS I AM INIZIALIZING AMOUNT TO 100 BECAUSE I DON'T KNOW WHAT IT IS, CHECK IT PLS
             for (int i = 0; i < length; i++) {
                 int rand = UnityEngine.Random.Range(i, length);
                 int temp = nodeList[i];
@@ -40,6 +39,7 @@ using UnityEngine;
                 else if (CarIndices.Contains(nodeList[i % length])) {
                     permutedList.Add(new List<int>(subList));
                     subList.Clear();
+                    subList.Add(nodeList[i%length])
                 }
 
                 else {
