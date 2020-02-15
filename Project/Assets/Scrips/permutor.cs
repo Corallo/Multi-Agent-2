@@ -7,6 +7,7 @@ public class permutor
 
     public List<List<int>> permute(int amountOfCars, List<int> nodeList)
     {
+
         List<List<int>> permutedList = new List<List<int>>();
         List<int> CarIndices = new List<int>();
         CarIndices.Add(nodeList[0]);
@@ -16,6 +17,7 @@ public class permutor
 
         for (int i = 0; i < length; i++)
         {
+            Random.seed = System.DateTime.Now.Millisecond;
             int rand = UnityEngine.Random.Range(i, length);
             int temp = nodeList[i];
             nodeList[i] = nodeList[rand];

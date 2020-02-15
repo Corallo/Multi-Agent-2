@@ -197,6 +197,8 @@ public class Planner
 				//car.GetComponent<CarAI3>().trajectory = car.GetComponent<CarAI3>().myController.makeTrajectory(myRealPath, maxVel / 2.236f, maxAcc); ;
 				//car.GetComponent<CarAI3>().lastPointInPath = best_path[j][0];
 				car.GetComponent<CarAI3>().my_path = pathHelp(DroneGraph, best_path[j]);
+				car.GetComponent<CarAI3>().visited = new List<int>(best_path[j].Count);
+				car.GetComponent<CarAI3>().skipper = (int) Math.Pow(100, j);
 				j++;
 			}
 		}

@@ -21,7 +21,7 @@ namespace UnityStandardAssets.Vehicles.Car
         public GameObject[] friends;
         public GameObject[] enemies;
 
-
+        public List<int> visited = new List<int>();
         int counter = 0;
         //SphereCollider droneCollider;
         private float Margin = 0;
@@ -31,6 +31,7 @@ namespace UnityStandardAssets.Vehicles.Car
         //All edges have same length:
         public float edgeLength = 10.0f;
         public float edgeMinDist = 0.1f;
+        public int skipper;
         public float addEdgeMaxLength = 12.0f;
         public List<Node> my_path = new List<Node>();
         int randomTimer = 0;
@@ -58,7 +59,12 @@ namespace UnityStandardAssets.Vehicles.Car
 
         private void FixedUpdate()
         {
+            if (skipper > 0)
+            {
+                skipper--;
+                return;
 
+            }
 
             if (my_path.Count == 0 || my_path.Count == 1) { return; }
             /*foreach (Node n in my_path)
@@ -75,9 +81,10 @@ namespace UnityStandardAssets.Vehicles.Car
 
 
             }
+
             else
             {
-                
+                /*
                 float curveAngel = Vector3.Angle(my_path[lastPointInPath].getPosition() - my_path[lastPointInPath + 1].getPosition(), my_path[lastPointInPath + 1].getPosition() - my_path[lastPointInPath + 2].getPosition());
                 for (int i = lastPointInPath; i < my_path.Count; i = i + 1)
                 {
@@ -86,7 +93,14 @@ namespace UnityStandardAssets.Vehicles.Car
                         lastPointInPath = i;
                     }
                 }
-
+                */
+                //for (int i = lastPointInPath; i < my_path.Count; i++)
+                //{
+                if (Vector3.Distance(transform.position, my_path[lastPointInPath].getPosition())<1f)
+                {
+                    lastPointInPath++;
+                }
+               // }
 
                 if (lastPointInPath != my_path.Count - 1)
                 {
