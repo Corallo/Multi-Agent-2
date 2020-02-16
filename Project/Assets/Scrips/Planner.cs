@@ -58,8 +58,8 @@ public class Planner
 
 		Transform ColliderBottom = m_Car.transform.Find("Colliders").Find("ColliderBottom");
 		Vector3 scale = ColliderBottom.localScale;
-		Margin = scale.z / 2;
-		sideMargin = scale.x / 2;
+		Margin = scale.z / 1;
+		sideMargin = scale.x / 1;
 
 
 		// Plan your path here
@@ -136,7 +136,7 @@ public class Planner
 		Debug.Log(strings);
 		permutor p = new permutor();
 		List<List<int>> this_path = new List<List<int>>();
-		while (time < 10)
+		while (time < 1)
 		{
 			car_targets = p.permute(friends.Length, point_of_interest);
 
@@ -189,6 +189,16 @@ public class Planner
 			}
 			time++;
 
+			// Block of code to hopefully remove consecutive duplicates of nodes in the path that might cause issues.
+			foreach (var List in best_path){
+				for (int i = List.Count - 2; i >= 0; i--){
+					if(List[i] == List[i+1]){
+						List.RemoveAt(i);
+					}
+				}
+			}
+
+
 			
 			int j = 0;
 			foreach ( var car in friends)
@@ -197,8 +207,20 @@ public class Planner
 				//car.GetComponent<CarAI3>().trajectory = car.GetComponent<CarAI3>().myController.makeTrajectory(myRealPath, maxVel / 2.236f, maxAcc); ;
 				//car.GetComponent<CarAI3>().lastPointInPath = best_path[j][0];
 				car.GetComponent<CarAI3>().my_path = pathHelp(DroneGraph, best_path[j]);
-				car.GetComponent<CarAI3>().visited = new List<int>(best_path[j].Count);
-				car.GetComponent<CarAI3>().skipper = (int) Math.Pow(100, j);
+				car.GetComponent<CarAI3>().my_path_length = best_path[j].Count;
+				car.GetComponent<CarAI3>().my_mask = mask;
+				if (j == 0){
+					car.GetComponent<CarAI3>().color = "Cyan";
+					car.GetComponent<CarAI3>().skipper = 0;
+				}
+				else if (j == 1){
+					car.GetComponent<CarAI3>().color = "Yellow";
+					car.GetComponent<CarAI3>().skipper = 300;
+				}
+				else{
+					car.GetComponent<CarAI3>().color = "Blue";
+					car.GetComponent<CarAI3>().skipper = 1000;
+				}
 				j++;
 			}
 		}
@@ -206,11 +228,11 @@ public class Planner
 
 
 		Vector3 old_wp = DroneGraph.getNode(best_path[0][0]).getPosition();
-		Debug.Log("Printing space now");
+		
 		foreach (var wp in best_path[0])
 		{
 			//Debug.Log(Vector3.Distance(old_wp, DroneGraph.getNode(wp).getPosition()));
-			Debug.DrawLine(old_wp, DroneGraph.getNode(wp).getPosition(), Color.cyan, 100f);
+			Debug.DrawLine(old_wp, DroneGraph.getNode(wp).getPosition(), Color.cyan, 10000f);
 			old_wp = DroneGraph.getNode(wp).getPosition();
 		}
 
@@ -218,7 +240,7 @@ public class Planner
 		foreach (var wp in best_path[1])
 		{
 			//Debug.Log(Vector3.Distance(old_wp, DroneGraph.getNode(wp).getPosition()));
-			Debug.DrawLine(old_wp, DroneGraph.getNode(wp).getPosition(), Color.yellow, 100f);
+			Debug.DrawLine(old_wp, DroneGraph.getNode(wp).getPosition(), Color.yellow, 10000f);
 			old_wp = DroneGraph.getNode(wp).getPosition();
 		}
 		old_wp = DroneGraph.getNode(best_path[2][0]).getPosition();
@@ -226,7 +248,7 @@ public class Planner
 		foreach (var wp in best_path[2])
 		{
 			//Debug.Log(Vector3.Distance(old_wp, DroneGraph.getNode(wp).getPosition()));
-			Debug.DrawLine(old_wp, DroneGraph.getNode(wp).getPosition(), Color.blue, 100f);
+			Debug.DrawLine(old_wp, DroneGraph.getNode(wp).getPosition(), Color.blue, 10000f);
 			old_wp = DroneGraph.getNode(wp).getPosition();
 		}
 

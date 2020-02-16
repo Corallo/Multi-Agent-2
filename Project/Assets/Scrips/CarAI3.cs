@@ -21,7 +21,14 @@ namespace UnityStandardAssets.Vehicles.Car
         public GameObject[] friends;
         public GameObject[] enemies;
 
-        public List<int> visited = new List<int>();
+		public String color = "";
+
+		public int my_path_length;
+
+        public LayerMask my_mask;
+
+        public int skipper;
+
         int counter = 0;
         //SphereCollider droneCollider;
         private float Margin = 0;
@@ -31,7 +38,6 @@ namespace UnityStandardAssets.Vehicles.Car
         //All edges have same length:
         public float edgeLength = 10.0f;
         public float edgeMinDist = 0.1f;
-        public int skipper;
         public float addEdgeMaxLength = 12.0f;
         public List<Node> my_path = new List<Node>();
         int randomTimer = 0;
@@ -59,48 +65,65 @@ namespace UnityStandardAssets.Vehicles.Car
 
         private void FixedUpdate()
         {
-            if (skipper > 0)
-            {
-                skipper--;
-                return;
 
-            }
 
-            if (my_path.Count == 0 || my_path.Count == 1) { return; }
+            //if (my_path.Count == 0 || my_path.Count == 1) { return; }
             /*foreach (Node n in my_path)
             {
                 Debug.Log(n.getId());
             }*/
             CarController controller = transform.GetComponent<CarController>();
-            if (lastPointInPath == my_path.Count - 3)
+            /*if (lastPointInPath == my_path.Count - 3)
             {
+				Debug.Log("Goal position in sight!");
+				Debug.Log(goal_pos);
                 Vector3 carToTarget = transform.InverseTransformPoint(goal_pos);
                 float newSteer = (carToTarget.x / carToTarget.magnitude);
                 float newSpeed = 1f;
                 m_Car.Move(newSteer, newSpeed, newSpeed, 0);
+            }*/
 
+            if (skipper > 0)
+            {
+                skipper--;
+                m_Car.Move(0f, 1f, 1f, 0f);
+                return;
 
             }
 
+			if (my_path.Count == 0 || my_path.Count == 1) {
+                m_Car.Move(0f, 1f, 1f, 0f);
+                //return; 
+            }
+            
             else
             {
-                /*
-                float curveAngel = Vector3.Angle(my_path[lastPointInPath].getPosition() - my_path[lastPointInPath + 1].getPosition(), my_path[lastPointInPath + 1].getPosition() - my_path[lastPointInPath + 2].getPosition());
+                
+                //float curveAngel = Vector3.Angle(my_path[lastPointInPath].getPosition() - my_path[lastPointInPath + 1].getPosition(), my_path[lastPointInPath + 1].getPosition() - my_path[lastPointInPath + 2].getPosition());
+                /*int oldLastPointInPath = lastPointInPath;
                 for (int i = lastPointInPath; i < my_path.Count; i = i + 1)
                 {
-                    if (3.0f + 0.04 * (controller.CurrentSpeed) >= Vector3.Distance(my_path[i].getPosition(), transform.position))
+                    if (3.0f + 0.04 * (controller.CurrentSpeed) >= Vector3.Distance(my_path[i].getPosition(), transform.position)) //0.04
+                    //if (10.0f >= Vector3.Distance(my_path[i].getPosition(), transform.position)) 
                     {
-                        lastPointInPath = i;
+                        //lastPointInPath = i;
+                        if(oldLastPointInPath + 20 > i){
+                            lastPointInPath = i;
+                        }
                     }
-                }
-                */
-                //for (int i = lastPointInPath; i < my_path.Count; i++)
-                //{
+                }*/
+
+                /*
                 if (Vector3.Distance(transform.position, my_path[lastPointInPath].getPosition())<1f)
                 {
                     lastPointInPath++;
                 }
-               // }
+                */
+
+                if (lastPointInPath == my_path_length - 1){
+                    return;
+                }
+
 
                 if (lastPointInPath != my_path.Count - 1)
                 {
@@ -108,7 +131,7 @@ namespace UnityStandardAssets.Vehicles.Car
                     Vector3 target = my_path[lastPointInPath + 1].getPosition();
                     float distanceToTargetTemp = Vector3.Distance(transform.position, target);
                     int targetId = 0;
-                    for (int i = lastPointInPath + 2; i < my_path.Count; i = i + 1)
+                    /*for (int i = lastPointInPath + 2; i < my_path.Count; i = i + 1)
                     {
                         float newDistance = Vector3.Distance(transform.position, my_path[i].getPosition());
                         if (distanceToTargetTemp > newDistance)
@@ -117,7 +140,12 @@ namespace UnityStandardAssets.Vehicles.Car
                             target = my_path[i].getPosition();
                             targetId = i;
                         }
+                    }*/
+                    if(distanceToTargetTemp < 6.0f){
+                        lastPointInPath++;
+                        target = my_path[lastPointInPath + 1].getPosition();
                     }
+
                     Vector3 carToTarget = transform.InverseTransformPoint(target);
                     float newSteer = (carToTarget.x / carToTarget.magnitude);
                     float newSpeed = 1f;
@@ -129,14 +157,15 @@ namespace UnityStandardAssets.Vehicles.Car
                     float distanceToTarget = Vector3.Distance(transform.position, target);
 
                     RaycastHit rayHit;
-                    bool hitBreak = Physics.SphereCast(transform.position, sideMargin, steeringPoint, out rayHit, 0.08f * breakingDistance);
-                    bool hitBack = Physics.SphereCast(transform.position, sideMargin, steeringPoint, out rayHit, Margin);
-                    bool hitContinueBack = Physics.SphereCast(transform.position, sideMargin, steeringPoint, out rayHit, Margin * 3);
-                    newAngle = Vector3.Angle(transform.position - my_path[lastPointInPath + 1].getPosition(), my_path[lastPointInPath + 1].getPosition() - my_path[lastPointInPath + 2].getPosition());
-                    if (controller.AccelInput == 0 && backing == false)
+                    bool hitBreak = Physics.SphereCast(transform.position, sideMargin, steeringPoint, out rayHit, 0.08f * breakingDistance, my_mask);
+                    bool hitBack = Physics.SphereCast(transform.position, sideMargin, steeringPoint, out rayHit, Margin, my_mask);
+                    bool hitContinueBack = Physics.SphereCast(transform.position, sideMargin, steeringPoint, out rayHit, Margin * 3, my_mask);
+                    //newAngle = Vector3.Angle(transform.position - my_path[lastPointInPath + 1].getPosition(), my_path[lastPointInPath + 1].getPosition() - my_path[lastPointInPath + 2].getPosition());
+
+                    /*if (controller.AccelInput == 0 && backing == false)
                     {
                         newSpeed = 1f / 1 + newAngle;
-                    }
+                    }*/
 
                     if (hitBack)
                     {
@@ -149,6 +178,7 @@ namespace UnityStandardAssets.Vehicles.Car
                     }
                     else if (hitBreak && backing == false)
                     {
+                        Debug.Log("Backing up");
                         newSpeed = -1;
                         handBreak = 1;
                         // print("yes");
@@ -170,10 +200,20 @@ namespace UnityStandardAssets.Vehicles.Car
                         backing = false;
                     }
 
-                    if (controller.CurrentSpeed > 2) //Default 150
+                    if (controller.CurrentSpeed > 20) //Default 20
                     {
                         newSpeed = 0;
                     }
+
+					if (carToTarget.z/carToTarget.magnitude < 0){ // The point is behind the car
+						newSpeed = -1f;
+						newSteer = (-carToTarget.x/carToTarget.magnitude);
+						if(carToTarget.z/carToTarget.magnitude == -1){
+							newSpeed = -1f;
+							newSteer = 1f; // Test. Unlikely to happen.
+						}
+					}
+
                     m_Car.Move(newSteer, newSpeed, newSpeed, handBreak);
 
 
