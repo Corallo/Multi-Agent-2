@@ -92,9 +92,9 @@ public class Planner
 			//}
 			cube.transform.position = new Vector3(position.x, 1, position.z);
 			cube.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
-			for (int j = 0; j < DroneGraph.getAdjList(i).Count; j++)
+			for (int k = 0; k < DroneGraph.getAdjList(i).Count; k++)
 			{
-				Debug.DrawLine(DroneGraph.getNode(i).getPosition(), DroneGraph.getNode(DroneGraph.getAdjList(i)[j]).getPosition(), Color.red, 10f);
+				Debug.DrawLine(DroneGraph.getNode(i).getPosition(), DroneGraph.getNode(DroneGraph.getAdjList(i)[k]).getPosition(), Color.red, 10f);
 				//Debug.Log(DroneGraph.getNode(i).getPosition() +" - "+ DroneGraph.getNode(j).getPosition());
 			}
 			//Debug.Log("Adj list of node " + i.ToString());
@@ -189,41 +189,45 @@ public class Planner
 			}
 			time++;
 
-			// Block of code to hopefully remove consecutive duplicates of nodes in the path that might cause issues.
-			foreach (var List in best_path){
-				for (int i = List.Count - 2; i >= 0; i--){
-					if(List[i] == List[i+1]){
-						List.RemoveAt(i);
-					}
-				}
-			}
-
-
 			
-			int j = 0;
-			foreach ( var car in friends)
-			{
-				
-				//car.GetComponent<CarAI3>().trajectory = car.GetComponent<CarAI3>().myController.makeTrajectory(myRealPath, maxVel / 2.236f, maxAcc); ;
-				//car.GetComponent<CarAI3>().lastPointInPath = best_path[j][0];
-				car.GetComponent<CarAI3>().my_path = pathHelp(DroneGraph, best_path[j]);
-				car.GetComponent<CarAI3>().my_path_length = best_path[j].Count;
-				car.GetComponent<CarAI3>().my_mask = mask;
-				if (j == 0){
-					car.GetComponent<CarAI3>().color = "Cyan";
-					car.GetComponent<CarAI3>().skipper = 0;
+		}
+
+		// Block of code to hopefully remove consecutive duplicates of nodes in the path that might cause issues.
+		foreach (var List in best_path){
+			for (int i = List.Count - 2; i >= 0; i--){
+				if(List[i] == List[i+1]){
+					List.RemoveAt(i);
 				}
-				else if (j == 1){
-					car.GetComponent<CarAI3>().color = "Yellow";
-					car.GetComponent<CarAI3>().skipper = 300;
-				}
-				else{
-					car.GetComponent<CarAI3>().color = "Blue";
-					car.GetComponent<CarAI3>().skipper = 1000;
-				}
-				j++;
 			}
 		}
+
+
+		
+		int j = 0;
+		foreach ( var car in friends)
+		{
+			
+			//car.GetComponent<CarAI3>().trajectory = car.GetComponent<CarAI3>().myController.makeTrajectory(myRealPath, maxVel / 2.236f, maxAcc); ;
+			//car.GetComponent<CarAI3>().lastPointInPath = best_path[j][0];
+			car.GetComponent<CarAI3>().my_path = pathHelp(DroneGraph, best_path[j]);
+			car.GetComponent<CarAI3>().my_path_length = best_path[j].Count;
+			car.GetComponent<CarAI3>().my_mask = mask;
+			if (j == 0){
+				car.GetComponent<CarAI3>().color = "Cyan";
+				car.GetComponent<CarAI3>().skipper = 0;
+			}
+			else if (j == 1){
+				car.GetComponent<CarAI3>().color = "Yellow";
+				car.GetComponent<CarAI3>().skipper = 300;
+			}
+			else{
+				car.GetComponent<CarAI3>().color = "Blue";
+				car.GetComponent<CarAI3>().skipper = 1000;
+			}
+			j++;
+		}
+
+
 		/*SUM COST OF A STAR */
 
 
