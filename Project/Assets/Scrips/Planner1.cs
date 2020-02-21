@@ -53,6 +53,7 @@ public class Planner1 {
         List<List<int>> car_targets = new List<List<int>>();
         /* GENERATE PERMUTATION OF INTERESTING NODES */
         List<List<int>> best_path = new List<List<int>>();
+        List<List<int>> real_path = new List<List<int>>();
 
         double best_cost = 99999999999;
 
@@ -79,10 +80,10 @@ public class Planner1 {
         for (int i = 0; i < DroneGraph.getSize(); i++) {
             point_of_interest.Add(i);
         }
-        watch = System.Diagnostics.Stopwatch.StartNew();
-        Dictionary<Tuple<int, int>, double> CostMatrix = new Dictionary<Tuple<int, int>, double>();
-        Dictionary<Tuple<int, int>, List<int>> PathMatrix = new Dictionary<Tuple<int, int>, List<int>>();
-        for (int i = 0; i < point_of_interest.Count; i++) {
+        //watch = System.Diagnostics.Stopwatch.StartNew();
+        //Dictionary<Tuple<int, int>, double> CostMatrix = new Dictionary<Tuple<int, int>, double>();
+        //Dictionary<Tuple<int, int>, List<int>> PathMatrix = new Dictionary<Tuple<int, int>, List<int>>();
+        /*for (int i = 0; i < point_of_interest.Count; i++) {
             for (int k = 0; k < point_of_interest.Count; k++) {
                 ASuperStar(DroneGraph, point_of_interest[i], point_of_interest[k]);
                 List<int> tmp_path = getBestPath(DroneGraph, point_of_interest[i], point_of_interest[k]);
@@ -92,7 +93,7 @@ public class Planner1 {
         }
         watch.Stop();
         elapsedMs = watch.Elapsed;
-        Debug.Log("Time to precompute A Star" + elapsedMs.ToString());
+        Debug.Log("Time to precompute A Star" + elapsedMs.ToString());*/
         int time = 0;
         /* Debug.Log("Printing points of interest");
          var strings = string.Join(", ", point_of_interest);
@@ -126,11 +127,12 @@ public class Planner1 {
                     goal_idx = car_targets[c][i + 1];
                     //ASuperStar(DroneGraph, start_idx, goal_idx);
                     //path.AddRange(getBestPath(DroneGraph, start_idx, goal_idx)); // ADD To the real path, the path to get the ith point 
-                    path.AddRange(PathMatrix[new Tuple<int, int>(start_idx, goal_idx)]);
-                    this_cost[this_cost.Count - 1] += CostMatrix[new Tuple<int, int>(start_idx, goal_idx)];
+                    //path.AddRange(PathMatrix[new Tuple<int, int>(start_idx, goal_idx)]);
+                   // this_cost[this_cost.Count - 1] += CostMatrix[new Tuple<int, int>(start_idx, goal_idx)];
+                   
                 }
-                this_cost.Add(computePathCost(DroneGraph, path));
-                this_path.Add(new List<int>(path)); //copy the path
+                this_cost.Add(computemanhattnCost(car_targets[c],DroneGraph));
+                //this_path.Add(new List<int>(path)); //copy the path
                                                     //Debug.Log(this_cost[c]);
             }
             double real_cost = this_cost.Max();
@@ -144,7 +146,7 @@ public class Planner1 {
             if (real_cost < best_cost) {
                 Debug.Log("Found a better solution at iteration: " + time.ToString());
                 best_cost = real_cost;
-                best_path = new List<List<int>>(this_path);
+                best_path = new List<List<int>>(car_targets);
             }
             time++;
             /*
@@ -179,8 +181,22 @@ public class Planner1 {
               }
           }
           */
+        for (int c = 0; c < NUMBER_OF_CARS; c++) { //For all the car 
+            path.Clear();
+            if (car_targets[c].Count == 1) {
+                path.Add(car_targets[c][0]);
+            }
+            for (int i = 0; i < best_path[c].Count - 1; i++) {        //for all the interesting points of that car   
+                start_idx = best_path[c][i];
+                goal_idx = best_path[c][i + 1];
+                ASuperStar(DroneGraph, start_idx, goal_idx);
+                path.AddRange(getBestPath(DroneGraph, start_idx, goal_idx)); // ADD To the real path, the path to get the ith point 
 
+            }
+            real_path.Add(new List<int>(path)); //copy the path
 
+        }
+        best_path = real_path;
         int j = 0;
         foreach (var car in friends) {
 
@@ -235,6 +251,15 @@ public class Planner1 {
 
     }
 
+    double computemanhattnCost(List<int> path,Graph G) {
+        double cost = 0;
+        for (int i = 0; i < path.Count - 1; i++) {
+            Vector3 a = G.getNode(i).getPosition();
+            Vector3 b = G.getNode(i + 1).getPosition();
+            cost += Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y) + Mathf.Abs(a.z - b.z);
+        }
+        return cost;
+    }
 
     public void ASuperStar(Graph G, int start_pos, int idx_goal) {
         priorityQueue Q = new priorityQueue();
