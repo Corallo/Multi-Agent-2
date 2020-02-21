@@ -13,6 +13,17 @@ public class permutor
         CarIndices.Add(nodeList[0]);
         CarIndices.Add(nodeList[1]);
         CarIndices.Add(nodeList[2]);
+
+        for(int i = 0; i < 3; i++)
+        {
+            for(int j = nodeList.Count-1; j >= 3; j--)
+            {
+                if (nodeList[i] == nodeList[j])
+                {
+                    nodeList.RemoveAt(j);
+                }
+            }
+        }
         int length = nodeList.Count;
 
         for (int i = 0; i < length; i++)
