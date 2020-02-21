@@ -27,8 +27,8 @@ namespace UnityStandardAssets.Vehicles.Car
 
         int counter = 0;
         //SphereCollider droneCollider;
-        private float Margin = 0;
-        private float sideMargin = 0;
+        public float Margin = 1f;
+        public float sideMargin = 1f;
 
         private Graph DroneGraph;
         //All edges have same length:
@@ -81,6 +81,9 @@ namespace UnityStandardAssets.Vehicles.Car
                 float newSpeed = 1f;
                 m_Car.Move(newSteer, newSpeed, newSpeed, 0);
             }*/
+
+            Margin = 1;
+            sideMargin = 1;
 
             if (skipper > 0)
             {
@@ -142,7 +145,7 @@ namespace UnityStandardAssets.Vehicles.Car
                             targetId = i;
                         }
                     }*/
-                    if (distanceToTargetTemp < 1f)
+                    if (distanceToTargetTemp < 4f)
                     { // EQUAL TO DISTANCE OF NODES
                         lastPointInPath++;
                         target = my_path[lastPointInPath + 1].getPosition();
@@ -155,14 +158,41 @@ namespace UnityStandardAssets.Vehicles.Car
                     Vector3 steeringPoint = new Vector3(0, 0, 1);
                     steeringPoint = (transform.rotation * steeringPoint);
 
+                    bool carInFront = false;
+                    
+                    Vector3 rayFront = transform.position + steeringPoint;
+
                     float breakingDistance = (controller.CurrentSpeed * controller.CurrentSpeed) / (2);
                     float distanceToTarget = Vector3.Distance(transform.position, target);
 
                     RaycastHit rayHit;
-                    bool hitBreak = Physics.SphereCast(transform.position, sideMargin, steeringPoint, out rayHit, 0.08f * breakingDistance, my_mask);
-                    bool hitBack = Physics.SphereCast(transform.position, sideMargin, steeringPoint, out rayHit, Margin, my_mask);
-                    bool hitContinueBack = Physics.SphereCast(transform.position, sideMargin, steeringPoint, out rayHit, Margin * 3, my_mask);
-                    bool hitFront = Physics.Raycast(transform.position, -steeringPoint, 1, my_mask);
+                    bool hitBreak = Physics.SphereCast(rayFront, sideMargin, steeringPoint, out rayHit, 0.08f * breakingDistance);
+
+
+                    if(hitBreak && rayHit.collider.tag == "Player"){
+                        Debug.Log("Player Detected.");
+                        carInFront = true;
+                    }
+
+                    bool hitBack = Physics.SphereCast(rayFront, sideMargin, steeringPoint, out rayHit, Margin);
+
+                    if(hitBack && rayHit.collider.tag == "Player"){
+                        Debug.Log("Player Detected.");
+                        carInFront = true;
+                    }
+
+                    bool hitContinueBack = Physics.SphereCast(rayFront, sideMargin, steeringPoint, out rayHit, Margin * 3);
+
+                    if(hitContinueBack && rayHit.collider.tag == "Player"){
+                        Debug.Log("Player Detected.");
+                        carInFront = true;
+                    }
+
+                    if(hitBreak||hitBack||hitContinueBack){
+                        Debug.Log(rayHit.collider.tag);
+                    }
+
+                    bool hitFront = Physics.Raycast(transform.position - steeringPoint, -steeringPoint, 1, my_mask);
                     
                     bool hitBreak_r = Physics.Raycast(transform.position,  steeringPoint,  0.08f * breakingDistance, my_mask);
                     bool hitBack_r = Physics.Raycast(transform.position,  steeringPoint,  Margin, my_mask);
@@ -177,11 +207,11 @@ namespace UnityStandardAssets.Vehicles.Car
                     if (hitFront )
                     {
                         newSpeed = 1f;
-                        Debug.Log("Ups");
+                        //Debug.Log("Ups");
                     }
                     else if (hitBack || hitBack_r)
                     {
-                        Debug.Log("AAAA");
+                        //Debug.Log("AAAA");
                         backing = true;
                         newSpeed = -1f;
                         if (controller.BrakeInput > 0 && controller.AccelInput <= 0)
@@ -191,7 +221,7 @@ namespace UnityStandardAssets.Vehicles.Car
                     }
                     else if ((hitBreak||hitBreak_r) && backing == false)
                     {
-                        Debug.Log("Backing up");
+                        //Debug.Log("Backing up");
                         newSpeed = -1;
                         //handBreak = 1;
                         // print("yes");
@@ -199,13 +229,13 @@ namespace UnityStandardAssets.Vehicles.Car
                     }
                     if ((hitContinueBack||hitContinueBack_r) && controller.AccelInput >= 0 && backing == false)
                     {
-                        Debug.Log("BBBB");
+                        //Debug.Log("BBBB");
                         newSteer = newSteer * 2;
                         //print("nope");
                     }
                     if ((hitContinueBack||hitContinueBack_r) && backing == true)
                     {
-                        Debug.Log("CCCC");
+                        //Debug.Log("CCCC");
                         newSpeed = -1f;
                         newSteer = -newSteer;
                         //print("yes");
@@ -213,7 +243,7 @@ namespace UnityStandardAssets.Vehicles.Car
                     else
                     {
                         backing = false;
-                        Debug.Log("DDDD");
+                        //Debug.Log("DDDD");
                     }
 
                     if (controller.CurrentSpeed > 20) //Default 20
@@ -230,6 +260,11 @@ namespace UnityStandardAssets.Vehicles.Car
                             newSpeed = -1f;
                             newSteer = 1f; // Test. Unlikely to happen.
                         }
+                    }
+
+                    if (carInFront){
+                        Debug.Log("C A R ! ! ! ");
+                        newSteer = 1f;
                     }
 
                     m_Car.Move(newSteer, newSpeed, newSpeed, handBreak);
