@@ -202,18 +202,18 @@ public class Planner1 {
 
             //car.GetComponent<CarAI3>().trajectory = car.GetComponent<CarAI3>().myController.makeTrajectory(myRealPath, maxVel / 2.236f, maxAcc); ;
             //car.GetComponent<CarAI3>().lastPointInPath = best_path[j][0];
-            car.GetComponent<CarAI2>().my_path = pathHelp(DroneGraph, best_path[j]);
-            car.GetComponent<CarAI2>().my_path_length = best_path[j].Count;
-            car.GetComponent<CarAI2>().my_mask = mask;
+            car.GetComponent<CarAI1>().my_path = pathHelp(DroneGraph, best_path[j]);
+            car.GetComponent<CarAI1>().my_path_length = best_path[j].Count;
+            car.GetComponent<CarAI1>().my_mask = mask;
             if (j == 0) {
-                car.GetComponent<CarAI2>().color = "Cyan";
-                car.GetComponent<CarAI2>().skipper = 0;
+                car.GetComponent<CarAI1>().color = "Cyan";
+                car.GetComponent<CarAI1>().skipper = 0;
             } else if (j == 1) {
-                car.GetComponent<CarAI2>().color = "Yellow";
-                car.GetComponent<CarAI2>().skipper = 150;
+                car.GetComponent<CarAI1>().color = "Yellow";
+                car.GetComponent<CarAI1>().skipper = 150;
             } else {
-                car.GetComponent<CarAI2>().color = "Blue";
-                car.GetComponent<CarAI2>().skipper = 250;
+                car.GetComponent<CarAI1>().color = "Blue";
+                car.GetComponent<CarAI1>().skipper = 250;
             }
             j++;
         }
