@@ -159,6 +159,7 @@ namespace UnityStandardAssets.Vehicles.Car
                     steeringPoint = (transform.rotation * steeringPoint);
 
                     bool carInFront = false;
+                    bool carBehind = false;
                     
                     Vector3 rayFront = transform.position + steeringPoint;
 
@@ -169,34 +170,35 @@ namespace UnityStandardAssets.Vehicles.Car
                     bool hitBreak = Physics.SphereCast(rayFront, sideMargin, steeringPoint, out rayHit, 0.08f * breakingDistance);
 
 
-                    if(hitBreak && rayHit.collider.tag == "Player"){
+                    if(hitBreak && rayHit.collider.attachedRigidbody != null && rayHit.collider.attachedRigidbody.tag == "Player"){
                         Debug.Log("Player Detected.");
                         carInFront = true;
                     }
 
                     bool hitBack = Physics.SphereCast(rayFront, sideMargin, steeringPoint, out rayHit, Margin);
 
-                    if(hitBack && rayHit.collider.tag == "Player"){
+                    if(hitBack && rayHit.collider.attachedRigidbody != null && rayHit.collider.attachedRigidbody.tag == "Player"){
                         Debug.Log("Player Detected.");
                         carInFront = true;
                     }
 
                     bool hitContinueBack = Physics.SphereCast(rayFront, sideMargin, steeringPoint, out rayHit, Margin * 3);
 
-                    if(hitContinueBack && rayHit.collider.tag == "Player"){
+                    if(hitContinueBack && rayHit.collider.attachedRigidbody != null && rayHit.collider.attachedRigidbody.tag == "Player"){
                         Debug.Log("Player Detected.");
                         carInFront = true;
                     }
 
-                    if(hitBreak||hitBack||hitContinueBack){
-                        Debug.Log(rayHit.collider.tag);
-                    }
+                    RaycastHit rayBackHit;
+                    bool hitFront = Physics.Raycast(transform.position - steeringPoint, -steeringPoint, out rayBackHit, 1);
 
-                    bool hitFront = Physics.Raycast(transform.position - steeringPoint, -steeringPoint, 1, my_mask);
+                    if(hitFront && rayBackHit.collider.attachedRigidbody != null && rayBackHit.collider.attachedRigidbody.tag == "Player"){
+                        carBehind = true;
+                    }
                     
-                    bool hitBreak_r = Physics.Raycast(transform.position,  steeringPoint,  0.08f * breakingDistance, my_mask);
-                    bool hitBack_r = Physics.Raycast(transform.position,  steeringPoint,  Margin, my_mask);
-                    bool hitContinueBack_r = Physics.Raycast(transform.position,  steeringPoint,  Margin * 3, my_mask);
+                    bool hitBreak_r = Physics.Raycast(transform.position,  steeringPoint,  0.08f * breakingDistance);
+                    bool hitBack_r = Physics.Raycast(transform.position,  steeringPoint,  Margin);
+                    bool hitContinueBack_r = Physics.Raycast(transform.position,  steeringPoint,  Margin * 3);
                     
                     //newAngle = Vector3.Angle(transform.position - my_path[lastPointInPath + 1].getPosition(), my_path[lastPointInPath + 1].getPosition() - my_path[lastPointInPath + 2].getPosition());
 
@@ -265,6 +267,10 @@ namespace UnityStandardAssets.Vehicles.Car
                     if (carInFront){
                         Debug.Log("C A R ! ! ! ");
                         newSteer = 1f;
+                    }
+
+                    if(carBehind){
+                        newSteer = -1f;
                     }
 
                     m_Car.Move(newSteer, newSpeed, newSpeed, handBreak);
