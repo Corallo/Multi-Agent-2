@@ -13,12 +13,13 @@ public class TerrainManager : MonoBehaviour {
     public TerrainInfo myInfo;
 
     public GameObject flag;
-
+    public bool done;
 
     // Use this for initialization
     void Start()
     {
-        Planner p = new Planner();
+
+        Planner2 p = new Planner2(); //CHANGE PlannerX for assignment X!!!
 
         p.ComputePath(this);
     }
@@ -52,7 +53,7 @@ public class TerrainManager : MonoBehaviour {
 
     // Update is called once per frame
     void Update () {
-		
+
 	}
 }
 
