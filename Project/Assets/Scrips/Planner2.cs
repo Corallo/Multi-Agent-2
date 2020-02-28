@@ -104,13 +104,14 @@ public class Planner2 {
 
 
 
-            car_targets = TabuSearch.RunTabuSearch(3, point_of_interest, CostMatrix, PathMatrix, 10, 100, 100);
-
-         
+            car_targets = TabuSearch.RunTabuSearch(3, point_of_interest, CostMatrix, PathMatrix, 100, 10000, 10000);
+            Debug.Log(car_targets.Count);
+            
             List<float> this_cost = new List<float>();
             this_path.Clear();
             for (int c = 0; c < NUMBER_OF_CARS; c++) { //For all the car 
                 path.Clear();
+                Debug.Log(car_targets[c].Count);
                 if (car_targets[c].Count == 1) {
                     path.Add(car_targets[c][0]);
                 }
