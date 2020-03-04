@@ -226,7 +226,7 @@ namespace UnityStandardAssets.Vehicles.Car {
                         //Debug.Log("DDDD");
                     }
 
-                    if (controller.CurrentSpeed > 20) //Default 20
+                    if (controller.CurrentSpeed > 200) //Default 20
                     {
                         newSpeed = 0;
                     }

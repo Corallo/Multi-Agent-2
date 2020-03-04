@@ -1,7 +1,10 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Newtonsoft.Json; // Import JSON.NET from Unity Asset store
+using Newtonsoft.Json;
+using UnityStandardAssets.Vehicles.Car;
+
+// Import JSON.NET from Unity Asset store
 
 
 public class TerrainManager : MonoBehaviour {
@@ -19,9 +22,9 @@ public class TerrainManager : MonoBehaviour {
     void Start()
     {
 
-        Planner2 p = new Planner2(); //CHANGE PlannerX for assignment X!!!
+       // Planner1 p = new Planner1(); //CHANGE PlannerX for assignment X!!!
 
-        p.ComputePath(this);
+       // p.ComputePath(this);
     }
 
     // Use this for initialization
@@ -54,7 +57,7 @@ public class TerrainManager : MonoBehaviour {
     // Update is called once per frame
     void Update () {
 
-	}
+    }
 }
 
 

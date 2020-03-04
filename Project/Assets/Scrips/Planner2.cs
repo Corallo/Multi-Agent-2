@@ -6,6 +6,8 @@ using System.Linq;
 using MyGraph;
 using UnityStandardAssets.Vehicles.Car;
 using System;
+using System.IO;
+using System.Text;
 using static TabuSearch;
 public class Planner2 {
 
@@ -98,13 +100,13 @@ public class Planner2 {
         /* Debug.Log("Printing points of interest");
          var strings = string.Join(", ", point_of_interest);
          Debug.Log(strings);*/
-        permutor p = new permutor();
+
         List<List<int>> this_path = new List<List<int>>();
         watch = System.Diagnostics.Stopwatch.StartNew();
 
 
 
-            car_targets = TabuSearch.RunTabuSearch(3, point_of_interest, CostMatrix, PathMatrix, 100, 10000, 10000);
+            car_targets = TabuSearch.RunTabuSearch(3, point_of_interest, CostMatrix, PathMatrix, 100, 1000, 100);
             Debug.Log(car_targets.Count);
             
             List<float> this_cost = new List<float>();
@@ -556,6 +558,19 @@ public class Planner2 {
     }
 
     List<int> findBestSet() {
+        var stringBuilder = new StringBuilder();
+        int q = 0;
+        foreach (var arrayElement in sets)
+        {
+            
+            var strings = string.Join(", ", arrayElement);
+            stringBuilder.AppendLine(strings);
+        }
+
+        File.AppendAllText(@"C:\Users\delli\Desktop\array.txt", stringBuilder.ToString());
+
+        
+        
         List<int> bestset = new List<int>();
         HashSet<int> missingPoints = new HashSet<int>();
 

@@ -4,11 +4,9 @@ using UnityEngine;
 using System;
 using MyGraph;
 
-namespace UnityStandardAssets.Vehicles.Car
-{
+namespace UnityStandardAssets.Vehicles.Car {
     [RequireComponent(typeof(CarController))]
-    public class CarAI2 : MonoBehaviour
-    {
+    public class CarAI2 : MonoBehaviour {
         public CarController m_Car; // the car controller we want to use
 
         public GameObject terrain_manager_game_object;
@@ -38,12 +36,11 @@ namespace UnityStandardAssets.Vehicles.Car
         public List<Node> my_path = new List<Node>();
         int randomTimer = 0;
         Vector3 goal_pos;
-        public int lastPointInPath ;
+        public int lastPointInPath;
         public float newAngle = 0;
         private Boolean backing = false;
 
-        private void Start()
-        {
+        private void Start() {
             // get the car controller
             m_Car = GetComponent<CarController>();
             terrain_manager = terrain_manager_game_object.GetComponent<TerrainManager>();
@@ -61,8 +58,7 @@ namespace UnityStandardAssets.Vehicles.Car
         }
 
 
-        private void FixedUpdate()
-        {
+        private void FixedUpdate() {
 
 
 
@@ -85,22 +81,17 @@ namespace UnityStandardAssets.Vehicles.Car
             Margin = 1;
             sideMargin = 1;
 
-            if (skipper > 0)
-            {
+            if (skipper > 0) {
                 skipper--;
                 m_Car.Move(0f, 0f, 0f, 0f);
                 return;
 
             }
 
-            if (my_path.Count == 0 || my_path.Count == 1)
-            {
+            if (my_path.Count == 0 || my_path.Count == 1) {
                 m_Car.Move(0f, 1f, 1f, 0f);
                 //return; 
-            }
-
-            else
-            {
+            } else {
 
                 //float curveAngel = Vector3.Angle(my_path[lastPointInPath].getPosition() - my_path[lastPointInPath + 1].getPosition(), my_path[lastPointInPath + 1].getPosition() - my_path[lastPointInPath + 2].getPosition());
                 /*int oldLastPointInPath = lastPointInPath;
@@ -123,14 +114,12 @@ namespace UnityStandardAssets.Vehicles.Car
                 }
                 */
 
-                if (lastPointInPath == my_path_length - 1)
-                {
+                if (lastPointInPath == my_path_length - 1) {
                     return;
                 }
 
 
-                if (lastPointInPath != my_path.Count - 1)
-                {
+                if (lastPointInPath != my_path.Count - 1) {
 
                     Vector3 target = my_path[lastPointInPath + 1].getPosition();
                     float distanceToTargetTemp = Vector3.Distance(transform.position, target);
@@ -145,8 +134,7 @@ namespace UnityStandardAssets.Vehicles.Car
                             targetId = i;
                         }
                     }*/
-                    if (distanceToTargetTemp < 4f)
-                    { // EQUAL TO DISTANCE OF NODES
+                    if (distanceToTargetTemp < 4f) { // EQUAL TO DISTANCE OF NODES
                         lastPointInPath++;
                         target = my_path[lastPointInPath + 1].getPosition();
                     }
@@ -160,7 +148,7 @@ namespace UnityStandardAssets.Vehicles.Car
 
                     bool carInFront = false;
                     bool carBehind = false;
-                    
+
                     Vector3 rayFront = transform.position + steeringPoint;
 
                     float breakingDistance = (controller.CurrentSpeed * controller.CurrentSpeed) / (2);
@@ -170,21 +158,21 @@ namespace UnityStandardAssets.Vehicles.Car
                     bool hitBreak = Physics.SphereCast(rayFront, sideMargin, steeringPoint, out rayHit, 0.08f * breakingDistance);
 
 
-                    if(hitBreak && rayHit.collider.attachedRigidbody != null && rayHit.collider.attachedRigidbody.tag == "Player"){
+                    if (hitBreak && rayHit.collider.attachedRigidbody != null && rayHit.collider.attachedRigidbody.tag == "Player") {
                         Debug.Log("Player Detected.");
                         carInFront = true;
                     }
 
                     bool hitBack = Physics.SphereCast(rayFront, sideMargin, steeringPoint, out rayHit, Margin);
 
-                    if(hitBack && rayHit.collider.attachedRigidbody != null && rayHit.collider.attachedRigidbody.tag == "Player"){
+                    if (hitBack && rayHit.collider.attachedRigidbody != null && rayHit.collider.attachedRigidbody.tag == "Player") {
                         Debug.Log("Player Detected.");
                         carInFront = true;
                     }
 
                     bool hitContinueBack = Physics.SphereCast(rayFront, sideMargin, steeringPoint, out rayHit, Margin * 3);
 
-                    if(hitContinueBack && rayHit.collider.attachedRigidbody != null && rayHit.collider.attachedRigidbody.tag == "Player"){
+                    if (hitContinueBack && rayHit.collider.attachedRigidbody != null && rayHit.collider.attachedRigidbody.tag == "Player") {
                         Debug.Log("Player Detected.");
                         carInFront = true;
                     }
@@ -192,84 +180,72 @@ namespace UnityStandardAssets.Vehicles.Car
                     RaycastHit rayBackHit;
                     bool hitFront = Physics.Raycast(transform.position - steeringPoint, -steeringPoint, out rayBackHit, 1);
 
-                    if(hitFront && rayBackHit.collider.attachedRigidbody != null && rayBackHit.collider.attachedRigidbody.tag == "Player"){
+                    if (hitFront && rayBackHit.collider.attachedRigidbody != null && rayBackHit.collider.attachedRigidbody.tag == "Player") {
                         carBehind = true;
                     }
-                    
-                    bool hitBreak_r = Physics.Raycast(transform.position,  steeringPoint,  0.08f * breakingDistance);
-                    bool hitBack_r = Physics.Raycast(transform.position,  steeringPoint,  Margin);
-                    bool hitContinueBack_r = Physics.Raycast(transform.position,  steeringPoint,  Margin * 3);
-                    
+
+                    bool hitBreak_r = Physics.Raycast(transform.position, steeringPoint, 0.08f * breakingDistance);
+                    bool hitBack_r = Physics.Raycast(transform.position, steeringPoint, Margin);
+                    bool hitContinueBack_r = Physics.Raycast(transform.position, steeringPoint, Margin * 3);
+
                     //newAngle = Vector3.Angle(transform.position - my_path[lastPointInPath + 1].getPosition(), my_path[lastPointInPath + 1].getPosition() - my_path[lastPointInPath + 2].getPosition());
 
                     /*if (controller.AccelInput == 0 && backing == false)
                     {
                         newSpeed = 1f / 1 + newAngle;
                     }*/
-                    if (hitFront )
-                    {
+                    if (hitFront) {
                         newSpeed = 1f;
                         //Debug.Log("Ups");
-                    }
-                    else if (hitBack || hitBack_r)
-                    {
+                    } else if (hitBack || hitBack_r) {
                         //Debug.Log("AAAA");
                         backing = true;
                         newSpeed = -1f;
-                        if (controller.BrakeInput > 0 && controller.AccelInput <= 0)
-                        {
+                        if (controller.BrakeInput > 0 && controller.AccelInput <= 0) {
                             newSteer = -newSteer;
                         }
-                    }
-                    else if ((hitBreak||hitBreak_r) && backing == false)
-                    {
+                    } else if ((hitBreak || hitBreak_r) && backing == false) {
                         //Debug.Log("Backing up");
                         newSpeed = -1;
                         //handBreak = 1;
                         // print("yes");
 
                     }
-                    if ((hitContinueBack||hitContinueBack_r) && controller.AccelInput >= 0 && backing == false)
-                    {
+                    if ((hitContinueBack || hitContinueBack_r) && controller.AccelInput >= 0 && backing == false) {
                         //Debug.Log("BBBB");
                         newSteer = newSteer * 2;
                         //print("nope");
                     }
-                    if ((hitContinueBack||hitContinueBack_r) && backing == true)
-                    {
+                    if ((hitContinueBack || hitContinueBack_r) && backing == true) {
                         //Debug.Log("CCCC");
                         newSpeed = -1f;
                         newSteer = -newSteer;
                         //print("yes");
-                    }
-                    else
-                    {
+                    } else {
                         backing = false;
                         //Debug.Log("DDDD");
                     }
 
-                    if (controller.CurrentSpeed > 20) //Default 20
+                    if (controller.CurrentSpeed > 50) //Default 20
                     {
                         newSpeed = 0;
                     }
 
-                    if (carToTarget.z / carToTarget.magnitude < 0)
-                    { // The point is behind the car
+                    if (carToTarget.z / carToTarget.magnitude < 0) { // The point is behind the car
                         newSpeed = -1f;
                         newSteer = (-carToTarget.x / carToTarget.magnitude);
-                        if (carToTarget.z / carToTarget.magnitude == -1)
-                        {
+                        if (carToTarget.z / carToTarget.magnitude == -1) {
                             newSpeed = -1f;
                             newSteer = 1f; // Test. Unlikely to happen.
                         }
                     }
 
-                    if (carInFront){
+                    if (carInFront) {
                         Debug.Log("C A R ! ! ! ");
                         newSteer = 1f;
                     }
 
-                    if(carBehind){
+                    if (carBehind) {
                         newSteer = -1f;
                     }
 
@@ -291,5 +267,5 @@ namespace UnityStandardAssets.Vehicles.Car
 
 
     }
-    
+
 }

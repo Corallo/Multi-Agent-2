@@ -141,7 +141,7 @@ namespace UnityStandardAssets.Vehicles.Car
                             targetId = i;
                         }
                     }*/
-                    if(distanceToTargetTemp < 6.0f){
+                    if(distanceToTargetTemp < 6.0f){ // EQUAL TO DISTANCE OF NODES
                         lastPointInPath++;
                         target = my_path[lastPointInPath + 1].getPosition();
                     }
@@ -157,17 +157,22 @@ namespace UnityStandardAssets.Vehicles.Car
                     float distanceToTarget = Vector3.Distance(transform.position, target);
 
                     RaycastHit rayHit;
-                    bool hitBreak = Physics.SphereCast(transform.position, sideMargin, steeringPoint, out rayHit, 0.08f * breakingDistance, my_mask);
-                    bool hitBack = Physics.SphereCast(transform.position, sideMargin, steeringPoint, out rayHit, Margin, my_mask);
-                    bool hitContinueBack = Physics.SphereCast(transform.position, sideMargin, steeringPoint, out rayHit, Margin * 3, my_mask);
+                    bool hitBreak = Physics.SphereCast(transform.position, sideMargin, steeringPoint, out rayHit, 0.08f * breakingDistance);
+                    bool hitBack = Physics.SphereCast(transform.position, sideMargin, steeringPoint, out rayHit, Margin);
+                    bool hitContinueBack = Physics.SphereCast(transform.position, sideMargin, steeringPoint, out rayHit, Margin * 3);
+                    bool hitFront = Physics.Raycast(transform.position, -steeringPoint, 1);
                     //newAngle = Vector3.Angle(transform.position - my_path[lastPointInPath + 1].getPosition(), my_path[lastPointInPath + 1].getPosition() - my_path[lastPointInPath + 2].getPosition());
 
                     /*if (controller.AccelInput == 0 && backing == false)
                     {
                         newSpeed = 1f / 1 + newAngle;
                     }*/
+                    if (hitFront)
+                    {
+                        newSpeed = 1f;
 
-                    if (hitBack)
+                    }
+                    else if (hitBack)
                     {
                         backing = true;
                         newSpeed = -1f;
@@ -180,7 +185,7 @@ namespace UnityStandardAssets.Vehicles.Car
                     {
                         Debug.Log("Backing up");
                         newSpeed = -1;
-                        handBreak = 1;
+                        //handBreak = 1;
                         // print("yes");
 
                     }
@@ -200,7 +205,7 @@ namespace UnityStandardAssets.Vehicles.Car
                         backing = false;
                     }
 
-                    if (controller.CurrentSpeed > 20) //Default 20
+                    if (controller.CurrentSpeed > 50) //Default 20
                     {
                         newSpeed = 0;
                     }
