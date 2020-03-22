@@ -1,11 +1,9 @@
-﻿using System.Collections;
+﻿using Newtonsoft.Json; // Import JSON.NET from Unity Asset store
 using System.Collections.Generic;
 using UnityEngine;
-using Newtonsoft.Json; // Import JSON.NET from Unity Asset store
 
 
-public class TrajectoryLogger : MonoBehaviour
-{
+public class TrajectoryLogger : MonoBehaviour {
     public string trajectory_filename = "Text/trajectory";
     private TrajectoryInfo myInfo;
     public TrajectoryInfo recordedInfo;
@@ -20,10 +18,8 @@ public class TrajectoryLogger : MonoBehaviour
     public int current_index;
 
 
-    private void Awake()
-    {
-        if (PlaybackOn)
-        {
+    private void Awake() {
+        if (PlaybackOn) {
             var jsonTextFile = Resources.Load<TextAsset>(trajectory_filename);
             myInfo = TrajectoryInfo.CreateFromJSON(jsonTextFile.text);
         }
@@ -34,40 +30,31 @@ public class TrajectoryLogger : MonoBehaviour
     }
 
     // Start is called before the first frame update
-    void Start()
-    {
-        
+    void Start() {
+
     }
 
     // Update is called once per frame
-    void Update()
-    {
-        
+    void Update() {
+
     }
 
-    private void FixedUpdate()
-    {
-        if (PlaybackOn)
-        {
+    private void FixedUpdate() {
+        if (PlaybackOn) {
             FixedUpdatePlayback();
         }
-        if (RecordingOn)
-        {
+        if (RecordingOn) {
             FixedUpdateRecord();
         }
     }
 
-    private void FixedUpdatePlayback()
-    {
-        if (Time.time <= myInfo.time_array[myInfo.time_array.Length - 1])
-        {
-            while (myInfo.time_array[current_index] < Time.time)
-            {
+    private void FixedUpdatePlayback() {
+        if (Time.time <= myInfo.time_array[myInfo.time_array.Length - 1]) {
+            while (myInfo.time_array[current_index] < Time.time) {
                 current_index++;
             }
             // avoid index out of bounds
-            if (current_index > myInfo.position_array.Length - 1)
-            {
+            if (current_index > myInfo.position_array.Length - 1) {
                 current_index = myInfo.position_array.Length - 1;
             }
             transform.position = myInfo.position_array[current_index];
@@ -76,24 +63,21 @@ public class TrajectoryLogger : MonoBehaviour
 
     }
 
-    private void FixedUpdateRecord()
-    {
+    private void FixedUpdateRecord() {
         time_list.Add(Time.time);
         position_list.Add(transform.position);
-        rotation_list.Add(transform.rotation.eulerAngles); 
+        rotation_list.Add(transform.rotation.eulerAngles);
     }
 
-    void OnApplicationQuit()
-    {
+    void OnApplicationQuit() {
         // Save data structure 
         //Debug.Log("Application ending after " + Time.time + " seconds");
 
-        if (RecordingOn)
-        {
+        if (RecordingOn) {
             recordedInfo.time_array = time_list.ToArray();
             recordedInfo.position_array = position_list.ToArray();
             recordedInfo.rotation_array = rotation_list.ToArray();
-            recordedInfo.file_name = "Traj" + System.DateTime.Now.ToLongTimeString().Replace(":","") + ".json";
+            recordedInfo.file_name = "Traj" + System.DateTime.Now.ToLongTimeString().Replace(":", "") + ".json";
             //Debug.Log(System.DateTime.Now.ToLongTimeString());
             //Debug.Log(System.DateTime.Now.ToShortTimeString());
 
@@ -104,8 +88,7 @@ public class TrajectoryLogger : MonoBehaviour
 }
 
 [System.Serializable]
-public class TrajectoryInfo
-{
+public class TrajectoryInfo {
     public Vector3[] position_array;
     public Vector3[] rotation_array;
     public float[] time_array;
@@ -113,19 +96,16 @@ public class TrajectoryInfo
     public string file_name;
     public string json_string;
 
-    public static TrajectoryInfo CreateFromJSON(string jsonString)
-    {
+    public static TrajectoryInfo CreateFromJSON(string jsonString) {
         //Debug.Log("Reading json");
         return JsonConvert.DeserializeObject<TrajectoryInfo>(jsonString);
     }
 
-    public void SaveToString()
-    {
+    public void SaveToString() {
         json_string = JsonConvert.SerializeObject(this);
     }
 
-    public void WriteDataToFile()
-    {
+    public void WriteDataToFile() {
         SaveToString();
         string path = Application.dataPath + "/Resources/Text/" + file_name;
         //Debug.Log("AssetPath:" + path);

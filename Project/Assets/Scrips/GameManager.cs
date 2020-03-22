@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -29,10 +28,10 @@ public class GameManager : MonoBehaviour {
     public bool long_range_turrets;
 
     // Use this for initialization
-    void Awake () {
+    void Awake() {
 
         terrain_manager = terrain_manager_game_object.GetComponent<TerrainManager>();
-       
+
         start_time = Time.time;
         completion_time = start_time - 1f;
 
@@ -40,9 +39,8 @@ public class GameManager : MonoBehaviour {
         //race_car.transform.rotation = Quaternion.identity;
 
         Random.InitState(random_seed);
-        for(int i = 0; i < number_of_turrets; i++)
-        {
-          
+        for (int i = 0; i < number_of_turrets; i++) {
+
             turret_clone = Instantiate(turret, Vector3.zero, Quaternion.identity);
             destructable_script = (Destructable)turret_clone.GetComponent(typeof(Destructable));
             destructable_script.is_weak = weak_turrets;
@@ -51,37 +49,29 @@ public class GameManager : MonoBehaviour {
             turret_list.Add(turret_clone);
         }
 
-        for (int i = 0; i < number_of_extra_cars; i++)
-        {
+        for (int i = 0; i < number_of_extra_cars; i++) {
             Vector3 pos = new Vector3(185f, 0, 135 + 10 * i);
             pos.y = 2f;
             turret_list.Add(Instantiate(race_car, pos, Quaternion.identity));
         }
 
-        
-        try
-        {
+
+        try {
             PositionTurrets();
-        }
-        catch
-        {
+        } catch {
             Debug.Log("Delayed positioning of Turrets (in Start()) needed...");
         }
     }
 
-    private void Start()
-    {
+    private void Start() {
         // odd fix
-        if (turret_list[0].transform.position.magnitude < 0.01f)
-        {
+        if (turret_list[0].transform.position.magnitude < 0.01f) {
             PositionTurrets();
         }
     }
 
-    void PositionTurrets()
-    {
-        foreach (GameObject my_turret in turret_list)
-        {
+    void PositionTurrets() {
+        foreach (GameObject my_turret in turret_list) {
             Vector3 pos = terrain_manager.myInfo.GetRandomFreePos();
             pos.y = 2f;
             my_turret.transform.position = pos;
@@ -90,14 +80,13 @@ public class GameManager : MonoBehaviour {
     }
 
     // Update is called once per frame
-    void Update () {
+    void Update() {
 
         turret_list.RemoveAll(item => item == null);
-        turret_text.text = "Remaining turrets:" + turret_list.Count;    
+        turret_text.text = "Remaining turrets:" + turret_list.Count;
 
-        if (turret_list.Count == 0 ){
-            if (completion_time < start_time)
-            {
+        if (turret_list.Count == 0) {
+            if (completion_time < start_time) {
                 completion_time = Time.time - start_time;
 
             }

@@ -1,11 +1,8 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using MyGraph;
 using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using MyGraph;
+using UnityEngine;
 using UnityStandardAssets.Vehicles.Car;
 
 [RequireComponent(typeof(CarController))]
@@ -19,7 +16,7 @@ public class Planner3 {
 	public GameObject[] friends;
 	public GameObject[] enemies;
 
-    
+
 	int counter = 0;
 	//SphereCollider droneCollider;
 	private float Margin;
@@ -38,10 +35,7 @@ public class Planner3 {
 	private Boolean backing = false;
 
 	public void ComputePath(TerrainManager _terrain_manager) {
-		float maxVel = 20f;
-		float maxAcc = 3f;
-		float constAcc = 0.1f;
-        mask = LayerMask.GetMask("CubeWalls");
+		mask = LayerMask.GetMask("CubeWalls");
 		//TerrainManager t = terrain_manager.GetComponent<TerrainManager>();
 		//terrain_manager = t;
 		terrain_manager = _terrain_manager.GetComponent<TerrainManager>();
@@ -67,11 +61,11 @@ public class Planner3 {
 
 		//Vector3 start_pos = terrain_manager.myInfo.start_pos;
 		goal_pos = terrain_manager.myInfo.goal_pos;
-        Vector3 start_pos = friends[0].transform.position;
+		Vector3 start_pos = friends[0].transform.position;
 		Node StartNode = new Node(new Vector3(start_pos.x, 1, start_pos.z));
 
 		DroneGraph = new Graph();
-        DroneGraph.addNode(StartNode);
+		DroneGraph.addNode(StartNode);
 		int n = 3000;
 		RRG(n, DroneGraph);
 		killFuckers(DroneGraph);
@@ -108,8 +102,6 @@ public class Planner3 {
 		/* GENERATE PERMUTATION OF INTERESTING NODES */
 		List<List<int>> best_path = new List<List<int>>();
 
-		float best_cost = 99999999999;
-
 		/* FIX THE START POINT = 0 IN A * */
 		int NUMBER_OF_CARS = 3;
 		int start_idx = 0;
@@ -125,18 +117,17 @@ public class Planner3 {
 		foreach (var car in enemies) {
 			point_of_interest.Add(DroneGraph.FindClosestNode(car.transform.position, DroneGraph).getId());
 		}
-        Dictionary<Tuple<int, int>, float> CostMatrix = new Dictionary<Tuple<int, int>, float>();
-        Dictionary<Tuple<int, int>, List<int>> PathMatrix = new Dictionary<Tuple<int, int>, List<int>>();
-        for (int i = 0; i < point_of_interest.Count; i++) {
-            for (int k = 0; k < point_of_interest.Count; k++) {
-                ASuperStar(DroneGraph, point_of_interest[i], point_of_interest[k]);
-                List<int> tmp_path = getBestPath(DroneGraph, point_of_interest[i], point_of_interest[k]);
-                PathMatrix[new Tuple<int, int>(point_of_interest[i], point_of_interest[k])] = new List<int>(tmp_path); // ADD To the real path, the path to get the ith point 
-                CostMatrix[new Tuple<int, int>(point_of_interest[i], point_of_interest[k])] = (computePathCost(DroneGraph, tmp_path));
-            }
-        }
-        int time = 0;
-        /* Debug.Log("Printing points of interest");
+		Dictionary<Tuple<int, int>, float> CostMatrix = new Dictionary<Tuple<int, int>, float>();
+		Dictionary<Tuple<int, int>, List<int>> PathMatrix = new Dictionary<Tuple<int, int>, List<int>>();
+		for (int i = 0; i < point_of_interest.Count; i++) {
+			for (int k = 0; k < point_of_interest.Count; k++) {
+				ASuperStar(DroneGraph, point_of_interest[i], point_of_interest[k]);
+				List<int> tmp_path = getBestPath(DroneGraph, point_of_interest[i], point_of_interest[k]);
+				PathMatrix[new Tuple<int, int>(point_of_interest[i], point_of_interest[k])] = new List<int>(tmp_path); // ADD To the real path, the path to get the ith point 
+				CostMatrix[new Tuple<int, int>(point_of_interest[i], point_of_interest[k])] = (computePathCost(DroneGraph, tmp_path));
+			}
+		}
+		/* Debug.Log("Printing points of interest");
          var strings = string.Join(", ", point_of_interest);
          Debug.Log(strings);*/
 
@@ -145,49 +136,49 @@ public class Planner3 {
 		var strings = string.Join(", ", point_of_interest);
 		Debug.Log(strings);
 		List<List<int>> this_path = new List<List<int>>();
-        car_targets = TabuSearch.RunTabuSearch(3, point_of_interest, CostMatrix, PathMatrix, 100, 1000, 100);
-        Debug.Log(car_targets.Count);
+		car_targets = OldTabuSearch.RunTabuSearch(3, point_of_interest, CostMatrix, PathMatrix, 100, 2000, 1000);
+		Debug.Log(car_targets.Count);
 
-        List<float> this_cost = new List<float>();
-        this_path.Clear();
-        for (int c = 0; c < NUMBER_OF_CARS; c++) { //For all the car 
-            path.Clear();
-            Debug.Log(car_targets[c].Count);
-            if (car_targets[c].Count == 1) {
-                path.Add(car_targets[c][0]);
-            }
-            for (int i = 0; i < car_targets[c].Count - 1; i++) {        //for all the interesting points of that car   
+		List<float> this_cost = new List<float>();
+		this_path.Clear();
+		for (int c = 0; c < NUMBER_OF_CARS; c++) { //For all the car 
+			path.Clear();
+			Debug.Log(car_targets[c].Count);
+			if (car_targets[c].Count == 1) {
+				path.Add(car_targets[c][0]);
+			}
+			for (int i = 0; i < car_targets[c].Count - 1; i++) {        //for all the interesting points of that car   
 
-                start_idx = car_targets[c][i];
-                goal_idx = car_targets[c][i + 1];
-                path.AddRange(PathMatrix[new Tuple<int, int>(start_idx, goal_idx)]);
-            }
-            this_path.Add(new List<int>(path)); //copy the path
-            //Debug.Log(this_cost[c]);
-        }
+				start_idx = car_targets[c][i];
+				goal_idx = car_targets[c][i + 1];
+				path.AddRange(PathMatrix[new Tuple<int, int>(start_idx, goal_idx)]);
+			}
+			this_path.Add(new List<int>(path)); //copy the path
+												//Debug.Log(this_cost[c]);
+		}
 
-        /*  Debug.Log("Cost for this path:" + real_cost.ToString());
+		/*  Debug.Log("Cost for this path:" + real_cost.ToString());
           foreach (var l in this_path)
           {
               strings = string.Join(", ", l);
               Debug.Log(strings);
           }*/
 
-        best_path = new List<List<int>>(this_path);
+		best_path = new List<List<int>>(this_path);
 
 
 		// Block of code to hopefully remove consecutive duplicates of nodes in the path that might cause issues.
 		foreach (var List in best_path) {
-				for (int i = List.Count - 2; i >= 0; i--) {
-					if (List[i] == List[i + 1]) {
-						List.RemoveAt(i);
-					}
+			for (int i = List.Count - 2; i >= 0; i--) {
+				if (List[i] == List[i + 1]) {
+					List.RemoveAt(i);
 				}
-        }
+			}
+		}
 
 
 
-		
+
 
 		// Block of code to hopefully remove consecutive duplicates of nodes in the path that might cause issues.
 		foreach (var List in best_path) {
@@ -288,7 +279,7 @@ public class Planner3 {
 
 
 	Vector3 Pseudo_random(float Margin) {
-        //UnityEngine.Random.seed = System.DateTime.Now.Millisecond;
+		//UnityEngine.Random.seed = System.DateTime.Now.Millisecond;
 		if (randomTimer == 10) {
 			randomTimer = 0;
 			return goal_pos;
@@ -337,7 +328,6 @@ public class Planner3 {
 
 	public void RRG(int max_nodes, Graph G) {
 		float edgeLength = 6.0f;
-		float nodeMinDistance = 2.5f;
 		float addEdgeMaxLength = 8.0f;
 
 
@@ -559,8 +549,6 @@ public class Planner3 {
 		float h_cost;
 		float actual_angle = 0;
 		float best_angle = 0;
-		float max_speed = 15;
-		float alpha = 1 / 10;
 		float zero = 0;
 		float k = 1 / zero;
 		foreach (var n in G.getAdjList(child)) {

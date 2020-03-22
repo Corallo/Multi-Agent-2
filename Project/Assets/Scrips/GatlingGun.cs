@@ -1,9 +1,7 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
-public class GatlingGun : MonoBehaviour
-{
+public class GatlingGun : MonoBehaviour {
     public bool is_long_range = false;
 
     private float time_between_updates = 0.5f;
@@ -34,12 +32,10 @@ public class GatlingGun : MonoBehaviour
     // Used to start and stop the turret firing
     bool canFire = false;
 
-    
-    void Start()
-    {
+
+    void Start() {
         // Set the firing range distance
-        if (is_long_range)
-        {
+        if (is_long_range) {
             firingRange = firingRange * 1000f;
         }
 
@@ -59,19 +55,16 @@ public class GatlingGun : MonoBehaviour
 
     //}
 
-    void FixedUpdate()
-    {
-       
+    void FixedUpdate() {
+
         target_list.RemoveAll(item => item == null);
         canFire = false;
 
 
-        if (target_list.Count > 0)
-        {
-        
-        float closest_distance = firingRange * 2f;
-            foreach(GameObject g_obj in target_list)
-            {
+        if (target_list.Count > 0) {
+
+            float closest_distance = firingRange * 2f;
+            foreach (GameObject g_obj in target_list) {
                 //if (g_obj == null)
                 //{
                 //    target_list.Remove(g_obj);
@@ -84,15 +77,12 @@ public class GatlingGun : MonoBehaviour
                 // Does the ray intersect any objects excluding the player layer
                 int layer_mask = LayerMask.GetMask("CubeWalls");
 
-                if (Physics.Raycast(transform.position + direction, direction, out hit, distance -1f, layer_mask))
-                {
+                if (Physics.Raycast(transform.position + direction, direction, out hit, distance - 1f, layer_mask)) {
                     Color line_color;
-                    if(enemy_tag == "Enemy") //i.e. from car to turret
+                    if (enemy_tag == "Enemy") //i.e. from car to turret
                     {
                         line_color = Color.red;
-                    }
-                    else
-                    {
+                    } else {
                         line_color = Color.blue;
                     }
 
@@ -113,22 +103,19 @@ public class GatlingGun : MonoBehaviour
 
                     //}
 
-                }
-                else
-                {
+                } else {
                     Debug.DrawRay(transform.position, direction * 1000, Color.white);
                     //Debug.Log("Did not Hit");
-                    if (distance < closest_distance)
-                    {
+                    if (distance < closest_distance) {
                         closest_distance = distance;
                         go_target = g_obj;
                         canFire = true;
                         //Debug.DrawRay(g_obj.transform.position, -direction, Color.blue);
-                        Debug.Log("Viable target:" + g_obj);
+                        //Debug.Log("Viable target:" + g_obj);
 
                     }
                 }
-                   
+
                 //}
 
             }
@@ -142,18 +129,15 @@ public class GatlingGun : MonoBehaviour
 
     }
 
-    void OnDrawGizmosSelected()
-    {
+    void OnDrawGizmosSelected() {
         // Draw a red sphere at the transform's position to show the firing range
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, firingRange);
     }
 
     // Detect an Enemy, aim and fire
-    void OnTriggerEnter(Collider other)
-    {
-        if (!target_list.Contains(other.transform.root.gameObject) && other.transform.root.tag == enemy_tag)
-        {
+    void OnTriggerEnter(Collider other) {
+        if (!target_list.Contains(other.transform.root.gameObject) && other.transform.root.tag == enemy_tag) {
             target_list.Add(other.transform.root.gameObject);
         }
         //target_list.Add(other.transform.parent.gameObject);
@@ -170,8 +154,7 @@ public class GatlingGun : MonoBehaviour
 
     }
     // Stop firing
-    void OnTriggerExit(Collider other)
-    {
+    void OnTriggerExit(Collider other) {
         target_list.Remove(other.transform.root.gameObject);
         //if (other.gameObject.tag == enemy_tag)
         //{
@@ -179,16 +162,14 @@ public class GatlingGun : MonoBehaviour
         //}
     }
 
-    void AimAndFire()
-    {
+    void AimAndFire() {
         // Gun barrel rotation
         go_barrel.transform.Rotate(0, 0, currentRotationSpeed * Time.deltaTime);
 
         //Debug.Log("Enemy nearby...3");
 
         // if can fire turret activates
-        if (canFire)
-        {
+        if (canFire) {
             // start rotation
             currentRotationSpeed = barrelRotationSpeed;
 
@@ -202,25 +183,20 @@ public class GatlingGun : MonoBehaviour
             //go_target.Destructable.
             Destructable enemy_script;
             enemy_script = go_target.GetComponent<Destructable>();
-            if(enemy_script != null)
-            {
+            if (enemy_script != null) {
                 enemy_script.DoDamage(1f);
             }
 
             // start particle system 
-            if (!muzzelFlash.isPlaying)
-            {
+            if (!muzzelFlash.isPlaying) {
                 //muzzelFlash.Play();
             }
-        }
-        else
-        {
+        } else {
             // slow down barrel rotation and stop
             currentRotationSpeed = Mathf.Lerp(currentRotationSpeed, 0, 10 * Time.deltaTime);
 
             // stop the particle system
-            if (muzzelFlash.isPlaying)
-            {
+            if (muzzelFlash.isPlaying) {
                 muzzelFlash.Stop();
             }
         }

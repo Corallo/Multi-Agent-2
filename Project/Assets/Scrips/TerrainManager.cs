@@ -1,8 +1,5 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using Newtonsoft.Json;
 using UnityEngine;
-using Newtonsoft.Json;
-using UnityStandardAssets.Vehicles.Car;
 
 // Import JSON.NET from Unity Asset store
 
@@ -17,26 +14,24 @@ public class TerrainManager : MonoBehaviour {
 
     public GameObject flag;
     public bool done;
-
+    public GameObject[] enemies;
+    private Planner5New p;
     // Use this for initialization
-    void Start()
-    {
-
-       // Planner1 p = new Planner1(); //CHANGE PlannerX for assignment X!!!
-
-       // p.ComputePath(this);
+    void Start() {
+        p = new Planner5New(); //CHANGE PlannerX for assignment X!!!
+        p.setEnemyNumber(this);
+        p.ComputePath(this);
     }
 
     // Use this for initialization
-    void Awake()
-    {
+    void Awake() {
 
         var jsonTextFile = Resources.Load<TextAsset>(terrain_filename);
 
         myInfo = TerrainInfo.CreateFromJSON(jsonTextFile.text);
 
         myInfo.CreateCubes();
- 
+
 
 
         // this code is used to create new terrains and obstacles
@@ -48,23 +43,28 @@ public class TerrainManager : MonoBehaviour {
         Instantiate(flag, myInfo.start_pos, Quaternion.identity);
         Instantiate(flag, myInfo.goal_pos, Quaternion.identity);
 
- 
+
 
     }
 
 
 
     // Update is called once per frame
-    void Update () {
+    void Update() {
 
+        enemies = GameObject.FindGameObjectsWithTag("Enemy");
+        //Planner5 p = new Planner5(); //CHANGE PlannerX for assignment X!!!
+        if (enemies.Length > 0)
+        {
+            p.checkReplan(this);
+        }
     }
 }
 
 
 
 [System.Serializable]
-public class TerrainInfo
-{
+public class TerrainInfo {
     public string file_name;
     public float x_low;
     public float x_high;
@@ -83,8 +83,7 @@ public class TerrainInfo
     //    return;
     //}
 
-    public void TerrainInfo2()
-    {
+    public void TerrainInfo2() {
         file_name = "terrain.json";
         x_low = 50f;
         x_high = 250f;
@@ -95,30 +94,22 @@ public class TerrainInfo
         Debug.Log("Using hard coded info...");
         //traversability = new float[,] { { 1.1f, 2f }, { 3.3f, 4.4f } };
         traversability = new float[x_N, z_N]; // hardcoded now, needs to change
-        for(int i = 0; i < x_N; i++)
-        {
-            for (int j = 0; j < z_N; j++)
-            {
-                if ((i == 0 || i == x_N -1) || (j == 0 || j == z_N - 1))
-                {
+        for (int i = 0; i < x_N; i++) {
+            for (int j = 0; j < z_N; j++) {
+                if ((i == 0 || i == x_N - 1) || (j == 0 || j == z_N - 1)) {
                     traversability[i, j] = 1.0f;
-                }
-                else
-                {
+                } else {
                     traversability[i, j] = 0.0f;
                 }
             }
         }
     }
 
-    public int get_i_index(float x)
-    {
-        int index = (int) Mathf.Floor(x_N * (x - x_low) / (x_high - x_low));
-        if (index < 0)
-        {
+    public int get_i_index(float x) {
+        int index = (int)Mathf.Floor(x_N * (x - x_low) / (x_high - x_low));
+        if (index < 0) {
             index = 0;
-        }else if (index > x_N - 1)
-        {
+        } else if (index > x_N - 1) {
             index = x_N - 1;
         }
         return index;
@@ -127,19 +118,15 @@ public class TerrainInfo
     public int get_j_index(float z) // get index of given coordinate
     {
         int index = (int)Mathf.Floor(z_N * (z - z_low) / (z_high - z_low));
-        if (index < 0)
-        {
+        if (index < 0) {
             index = 0;
-        }
-        else if (index > z_N - 1)
-        {
+        } else if (index > z_N - 1) {
             index = z_N - 1;
         }
         return index;
     }
 
-    public float get_x_pos(int i)
-    {
+    public float get_x_pos(int i) {
         float step = (x_high - x_low) / x_N;
         return x_low + step / 2 + step * i;
     }
@@ -150,16 +137,12 @@ public class TerrainInfo
         return z_low + step / 2 + step * j;
     }
 
-    public void CreateCubes()
-    {
+    public void CreateCubes() {
         float x_step = (x_high - x_low) / x_N;
         float z_step = (z_high - z_low) / z_N;
-        for (int i = 0; i < x_N; i++)
-        {
-            for (int j = 0; j < z_N; j++)
-            {
-                if (traversability[i, j] > 0.5f)
-                {
+        for (int i = 0; i < x_N; i++) {
+            for (int j = 0; j < z_N; j++) {
+                if (traversability[i, j] > 0.5f) {
                     GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
                     cube.transform.position = new Vector3(get_x_pos(i), 0.0f, get_z_pos(j));
                     cube.transform.localScale = new Vector3(x_step, 15.0f, z_step);
@@ -170,16 +153,13 @@ public class TerrainInfo
         }
     }
 
-    public Vector3 GetRandomFreePos()
-    {
+    public Vector3 GetRandomFreePos() {
         bool done = false;
         Vector3 pos = Vector3.zero;
 
-        while (! done)
-        {
+        while (!done) {
             pos = new Vector3(Random.Range(x_low, x_high), 0f, Random.Range(z_low, z_high));
-            if(traversability[get_i_index(pos.x), get_j_index(pos.z)] < 0.5f)
-            {
+            if (traversability[get_i_index(pos.x), get_j_index(pos.z)] < 0.5f) {
                 done = true;
             }
 
@@ -189,20 +169,17 @@ public class TerrainInfo
 
 
 
-    public static TerrainInfo CreateFromJSON(string jsonString)
-    {
+    public static TerrainInfo CreateFromJSON(string jsonString) {
         //Debug.Log("Reading json");
         return JsonConvert.DeserializeObject<TerrainInfo>(jsonString);
     }
 
-    public string SaveToString()
-    {
+    public string SaveToString() {
         //return JsonUtility.ToJson(this);
         return JsonConvert.SerializeObject(this);
     }
 
-    public void WriteDataToFile(string jsonString)
-    {
+    public void WriteDataToFile(string jsonString) {
         string path = Application.dataPath + "/Resources/Text/saved_terrain.json";
         Debug.Log("AssetPath:" + path);
         System.IO.File.WriteAllText(path, jsonString);

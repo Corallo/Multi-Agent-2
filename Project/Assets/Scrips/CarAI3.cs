@@ -1,18 +1,12 @@
-﻿using System.Collections;
+﻿using MyGraph;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
-using System;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using MyGraph;
 
 
-namespace UnityStandardAssets.Vehicles.Car
-{
+namespace UnityStandardAssets.Vehicles.Car {
     [RequireComponent(typeof(CarController))]
-    public class CarAI3 : MonoBehaviour
-    {
+    public class CarAI3 : MonoBehaviour {
         public CarController m_Car; // the car controller we want to use
 
         public GameObject terrain_manager_game_object;
@@ -21,9 +15,9 @@ namespace UnityStandardAssets.Vehicles.Car
         public GameObject[] friends;
         public GameObject[] enemies;
 
-		public String color = "";
+        public String color = "";
 
-		public int my_path_length;
+        public int my_path_length;
 
         public LayerMask my_mask;
 
@@ -46,12 +40,10 @@ namespace UnityStandardAssets.Vehicles.Car
         public float newAngle = 0;
         private Boolean backing = false;
 
-        private void Start()
-        {
+        private void Start() {
             // get the car controller
             terrain_manager = terrain_manager_game_object.GetComponent<TerrainManager>();
-            foreach (GameObject obj in enemies)
-            {
+            foreach (GameObject obj in enemies) {
                 Debug.DrawLine(transform.position, obj.transform.position, Color.black, 10f);
             }
             m_Car = GetComponent<CarController>();
@@ -63,8 +55,7 @@ namespace UnityStandardAssets.Vehicles.Car
             // ...
         }
 
-        private void FixedUpdate()
-        {
+        private void FixedUpdate() {
 
 
             //if (my_path.Count == 0 || my_path.Count == 1) { return; }
@@ -83,22 +74,18 @@ namespace UnityStandardAssets.Vehicles.Car
                 m_Car.Move(newSteer, newSpeed, newSpeed, 0);
             }*/
 
-            if (skipper > 0)
-            {
+            if (skipper > 0) {
                 skipper--;
                 m_Car.Move(0f, 1f, 1f, 0f);
                 return;
 
             }
 
-			if (my_path.Count == 0 || my_path.Count == 1) {
+            if (my_path.Count == 0 || my_path.Count == 1) {
                 m_Car.Move(0f, 1f, 1f, 0f);
                 //return; 
-            }
-            
-            else
-            {
-                
+            } else {
+
                 //float curveAngel = Vector3.Angle(my_path[lastPointInPath].getPosition() - my_path[lastPointInPath + 1].getPosition(), my_path[lastPointInPath + 1].getPosition() - my_path[lastPointInPath + 2].getPosition());
                 /*int oldLastPointInPath = lastPointInPath;
                 for (int i = lastPointInPath; i < my_path.Count; i = i + 1)
@@ -120,17 +107,15 @@ namespace UnityStandardAssets.Vehicles.Car
                 }
                 */
 
-                if (lastPointInPath == my_path_length - 1){
+                if (lastPointInPath == my_path_length - 1) {
                     return;
                 }
 
 
-                if (lastPointInPath != my_path.Count - 1)
-                {
+                if (lastPointInPath != my_path.Count - 1) {
 
                     Vector3 target = my_path[lastPointInPath + 1].getPosition();
                     float distanceToTargetTemp = Vector3.Distance(transform.position, target);
-                    int targetId = 0;
                     /*for (int i = lastPointInPath + 2; i < my_path.Count; i = i + 1)
                     {
                         float newDistance = Vector3.Distance(transform.position, my_path[i].getPosition());
@@ -141,7 +126,7 @@ namespace UnityStandardAssets.Vehicles.Car
                             targetId = i;
                         }
                     }*/
-                    if(distanceToTargetTemp < 6.0f){ // EQUAL TO DISTANCE OF NODES
+                    if (distanceToTargetTemp < 6.0f) { // EQUAL TO DISTANCE OF NODES
                         lastPointInPath++;
                         target = my_path[lastPointInPath + 1].getPosition();
                     }
@@ -167,41 +152,31 @@ namespace UnityStandardAssets.Vehicles.Car
                     {
                         newSpeed = 1f / 1 + newAngle;
                     }*/
-                    if (hitFront)
-                    {
+                    if (hitFront) {
                         newSpeed = 1f;
 
-                    }
-                    else if (hitBack)
-                    {
+                    } else if (hitBack) {
                         backing = true;
                         newSpeed = -1f;
-                        if (controller.BrakeInput > 0 && controller.AccelInput <= 0)
-                        {
+                        if (controller.BrakeInput > 0 && controller.AccelInput <= 0) {
                             newSteer = -newSteer;
                         }
-                    }
-                    else if (hitBreak && backing == false)
-                    {
+                    } else if (hitBreak && backing == false) {
                         Debug.Log("Backing up");
                         newSpeed = -1;
                         //handBreak = 1;
                         // print("yes");
 
                     }
-                    if (hitContinueBack && controller.AccelInput >= 0 && backing == false)
-                    {
+                    if (hitContinueBack && controller.AccelInput >= 0 && backing == false) {
                         newSteer = newSteer * 2;
                         //print("nope");
                     }
-                    if (hitContinueBack && backing == true)
-                    {
+                    if (hitContinueBack && backing == true) {
                         newSpeed = -1f;
                         newSteer = -newSteer;
                         //print("yes");
-                    }
-                    else
-                    {
+                    } else {
                         backing = false;
                     }
 
@@ -210,14 +185,14 @@ namespace UnityStandardAssets.Vehicles.Car
                         newSpeed = 0;
                     }
 
-					if (carToTarget.z/carToTarget.magnitude < 0){ // The point is behind the car
-						newSpeed = -1f;
-						newSteer = (-carToTarget.x/carToTarget.magnitude);
-						if(carToTarget.z/carToTarget.magnitude == -1){
-							newSpeed = -1f;
-							newSteer = 1f; // Test. Unlikely to happen.
-						}
-					}
+                    if (carToTarget.z / carToTarget.magnitude < 0) { // The point is behind the car
+                        newSpeed = -1f;
+                        newSteer = (-carToTarget.x / carToTarget.magnitude);
+                        if (carToTarget.z / carToTarget.magnitude == -1) {
+                            newSpeed = -1f;
+                            newSteer = 1f; // Test. Unlikely to happen.
+                        }
+                    }
 
                     m_Car.Move(newSteer, newSpeed, newSpeed, handBreak);
 

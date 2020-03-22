@@ -1,7 +1,6 @@
-﻿using System.Collections;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-using System;
 
 
 namespace UnityStandardAssets.Vehicles.Car {
@@ -40,6 +39,8 @@ namespace UnityStandardAssets.Vehicles.Car {
         private Boolean backing = false;
         public List<Vector3> myPath;
         public float dist;
+
+        public int skipCounter;
         private void Start() {
             // get the car controller
             dist = 1;
@@ -61,6 +62,7 @@ namespace UnityStandardAssets.Vehicles.Car {
                 i++;
             }
 
+            lastPointInPath = 0;
             myPath = new List<Vector3>();
             // Plan your path here
             // ...
@@ -69,34 +71,36 @@ namespace UnityStandardAssets.Vehicles.Car {
         }
 
 
-        private void FixedUpdate()
-        {
+        private void FixedUpdate() {
             float maxDistnce;
             float allowedVelocity;
-            float width = 20;
-            if (positions.Count <= 2) {
-                positions.Add(leader.transform.position);
-            } else {
-                positions.RemoveAt(0);
-                positions.Add(leader.transform.position);
-            }
 
-            if (positions.Count < 2)
-            {
+            if (skipCounter % 20 == 0) {
+                if (positions.Count <= 2) {
+                    positions.Add(leader.transform.position);
+                } else {
+                    //positions.RemoveAt(0);
+                    positions.Add(leader.transform.position);
+                }
+
+                if (positions.Count < 2) {
+                    return;
+                }
+                generatePath(positions, myPath, myIdx, positions.Count - 2);
+            }
+            skipCounter++;
+
+
+
+
+
+            if (myPath.Count < 5) {
                 return;
             }
 
-            generatePath(positions, myPath, myIdx);
 
-            if (myPath.Count < 50)
-            {
-                return;
-            }
-
-
-            for (int i = 0; i < myPath.Count-1; i++)
-            {
-                Debug.DrawLine(myPath[i], myPath[i+1], Color.cyan);
+            for (int i = 0; i < myPath.Count - 1; i++) {
+                Debug.DrawLine(myPath[i], myPath[i + 1], Color.cyan);
             }
             /*
             RaycastHit raycastHitleft;
@@ -187,18 +191,20 @@ namespace UnityStandardAssets.Vehicles.Car {
                 }
             }*/
 
-            /*
-            if (Vector3.Distance(transform.position, my_path[lastPointInPath].getPosition())<1f)
-            {
-                lastPointInPath++;
+
+            for (; Vector3.Distance(transform.position, myPath[lastPointInPath]) < 20f;) {
+                if (lastPointInPath < myPath.Count - 1) {
+                    lastPointInPath++;
+
+                } else {
+                    break;
+                }
+
             }
-            */
 
 
 
-            Vector3 target = myPath[0];
-            //float distanceToTargetTemp = Vector3.Distance(transform.position, target);
-            int targetId = 0;
+            Vector3 target = myPath[lastPointInPath];
 
 
 
@@ -207,31 +213,36 @@ namespace UnityStandardAssets.Vehicles.Car {
             float newSpeed = 1f;
             float handBreak = 0f;
 
-           // for (int i = 1; i < myPath.Count - 1; i++) {
-                float angle = Vector3.Angle(myPath[0] - myPath[25], myPath[49] - myPath[25]);
-                if (angle < 90f) //Change me
-                {
-                    Debug.Log("Ok stop now");
-                    newSpeed=-1f;
-                    m_Car.Move(newSteer, newSpeed, newSpeed, handBreak);
+            // for (int i = 1; i < myPath.Count - 1; i++) {
+            /*       float angle = Vector3.Angle(myPath[0] - myPath[25], myPath[49] - myPath[25]);
+                   if (angle < 90f) //Change me
+                   {
+                       Debug.Log("Ok stop now");
+                       newSpeed=-1f;
+                       m_Car.Move(newSteer, newSpeed, newSpeed, handBreak);
 
-            }
+               }*/
             //}
             Vector3 steeringPoint = new Vector3(0, 0, 1);
             steeringPoint = (transform.rotation * steeringPoint);
 
             bool carInFront = false;
             bool carBehind = false;
-            
+
             Vector3 rayFront = transform.position + steeringPoint;
 
             float breakingDistance = (controller.CurrentSpeed * controller.CurrentSpeed) / (2);
             float distanceToTarget = Vector3.Distance(transform.position, target);
-            if (distanceToTarget < 10f) {
-                newSpeed= 1f - ((10f - distanceToTarget)/10f);
+            if (lastPointInPath > myPath.Count - 30) {
+                if (distanceToTarget < 21f) {
+                    //newSpeed =  - ((20f - distanceToTarget) / 20f);
+                    newSpeed = -1;
+                }
+
             }
+
             RaycastHit rayHit;
-            bool hitBreak = Physics.SphereCast(rayFront, sideMargin, steeringPoint, out rayHit, 0.08f * breakingDistance,my_mask);
+            bool hitBreak = Physics.SphereCast(rayFront, sideMargin, steeringPoint, out rayHit, 0.08f * breakingDistance, my_mask);
 
 
             if (hitBreak && rayHit.collider.attachedRigidbody != null && rayHit.collider.attachedRigidbody.tag == "Player") {
@@ -276,13 +287,13 @@ namespace UnityStandardAssets.Vehicles.Car {
             } else if (hitBack || hitBack_r) {
                 //Debug.Log("AAAA");
                 backing = true;
-                newSpeed = 0f;//-1f;
+                newSpeed = -1f;//-1f;
                 if (controller.BrakeInput > 0 && controller.AccelInput <= 0) {
                     newSteer = -newSteer;
                 }
             } else if ((hitBreak || hitBreak_r) && backing == false) {
                 //Debug.Log("Backing up");
-                newSpeed = 0f; //-1;
+                newSpeed = -1f; //-1;
                 //handBreak = 1;
                 // print("yes");
 
@@ -294,7 +305,7 @@ namespace UnityStandardAssets.Vehicles.Car {
             }
             if ((hitContinueBack || hitContinueBack_r) && backing == true) {
                 //Debug.Log("CCCC");
-                newSpeed = 0f;//-1f;
+                newSpeed = -1f;//-1f;
                 newSteer = -newSteer;
                 //print("yes");
             } else {
@@ -304,35 +315,33 @@ namespace UnityStandardAssets.Vehicles.Car {
 
             //friends = GameObject.FindGameObjectsWithTag("Player");
             maxDistnce = 0;
-            for (int i=1; i < friends.Length;i++ )
-            {
+            for (int i = 1; i < friends.Length; i++) {
                 var f = friends[i];
                 var my_car = f.GetComponent<CarAI4>();
                 Debug.Log(my_car);
                 Debug.Log("Get ready for it:");
-                float ithdist =my_car.dist;
+                float ithdist = my_car.dist;
                 Debug.Log(ithdist);
-                if (maxDistnce < f.GetComponent<CarAI4>().dist)
-                {
+                if (maxDistnce < f.GetComponent<CarAI4>().dist) {
                     maxDistnce = f.GetComponent<CarAI4>().dist;
                 }
             }
-            
 
-            allowedVelocity = 150f *(dist/maxDistnce);
+
+            allowedVelocity = 60f * (dist / maxDistnce);
             if (controller.CurrentSpeed > allowedVelocity) //Default 20
             {
+                Debug.Log("Need to slow down!");
                 newSpeed = 0;
             }
 
             if (carToTarget.z / carToTarget.magnitude < 0) { // The point is behind the car
                 Debug.Log("IT IS BEHIND");
-                newSpeed = 0f;//-1f; //it was -1
-                newSteer = 0f; //(-carToTarget.x / carToTarget.magnitude);
-                if (carToTarget.z / carToTarget.magnitude == -1)
-                {
-                    newSpeed = 0f;//-1f; //it was -1
-                    newSteer = 0f; //1f; // Test. Unlikely to happen.
+                newSpeed = newSpeed;//-1f; //it was -1 //then it becomed 1
+                newSteer = -(-carToTarget.x / carToTarget.magnitude); // it was (-carToTarget.x / carToTarget.magnitude)
+                if (carToTarget.z / carToTarget.magnitude == -1) {
+                    newSpeed = -1f;//-1f; //it was -1
+                    newSteer = 1f; //1f; // Test. Unlikely to happen.
                 }
             }
 
@@ -361,70 +370,69 @@ namespace UnityStandardAssets.Vehicles.Car {
             //m_Car.Move(0f, 0f, 0f, 0f);
         }
 
-        public List<Vector3> generatePath(List<Vector3> positions, List<Vector3> myPath, int myIdx)
-        {
+        public List<Vector3> generatePath(List<Vector3> positions, List<Vector3> myPath, int myIdx, int idx) {
             RaycastHit raycastHitleft;
             RaycastHit raycastHitright;
             bool hitleft;
             bool hitright;
-            float width = 20;
+            float width = 25;
             float dl = width;
             float dr = width;
-
-            Vector3 line = createPerpendicularV(positions[0], positions[1]);
-            Vector3 goal = positions[0];
-            hitleft = Physics.Raycast(positions[0], line, out raycastHitleft, width, my_mask);
-            hitright = Physics.Raycast(positions[0], line, out raycastHitright, width, my_mask);
-            Debug.DrawLine(positions[0], positions[0] + line * width, Color.red);
-            Debug.DrawLine(positions[0], positions[0] + line * -width, Color.red);
+            LayerMask tmp_my_mask = LayerMask.GetMask("CubeWalls");
+            Vector3 line = createPerpendicularV(positions[idx], positions[idx + 1]);
+            Vector3 goal = positions[idx];
+            hitleft = Physics.Raycast(positions[idx], line, out raycastHitleft, width, tmp_my_mask);
+            hitright = Physics.Raycast(positions[idx], -line, out raycastHitright, width, tmp_my_mask);
 
 
             if (hitleft) {
-                Vector3 closest = raycastHitleft.collider.ClosestPointOnBounds(positions[0]);
-                dl = Vector3.Distance(closest, positions[0]);
+                //Vector3 closest = raycastHitleft.collider.ClosestPointOnBounds(positions[idx]);
+                dl = raycastHitleft.distance; //Vector3.Distance(closest, positions[idx]);
 
             }
             if (hitright) {
-                Vector3 closest = raycastHitright.collider.ClosestPointOnBounds(positions[0]);
-                dr = Vector3.Distance(closest, positions[0]);
+                //Vector3 closest = raycastHitright.collider.ClosestPointOnBounds(positions[idx]);
+                dr = raycastHitright.distance;//Vector3.Distance(closest, positions[idx]);
 
             }
             if (dl < dr) {
-                width = dl;
-            } else if (dr > dl) {
-                width = dr;
+                width = dl - 5;
+            } else if (dr < dl) {
+                width = dr - 5;
             } else if (dl == dr) {
-                width = Math.Min(width, dl);
+                width = Math.Min(width, dl) - 5;
             }
 
+            Debug.DrawLine(positions[idx], positions[idx] + line * width, Color.red);
+            Debug.DrawLine(positions[idx], positions[idx] + line * -width, Color.red);
+
             if (myIdx == 2) {
-                goal = positions[0] + width * line;
+                goal = positions[idx] + width * line;
             } else if (myIdx == 1) {
-                goal = positions[0] + 0.5f * width * line;
+                goal = positions[idx] + 0.5f * width * line;
             } else if (myIdx == 3) {
-                goal = positions[0] - 0.5f * width * line;
+                goal = positions[idx] - 0.5f * width * line;
             } else if (myIdx == 4) {
-                goal = positions[0] - width * line;
+                goal = positions[idx] - width * line;
             }
 
             myPath.Add((goal));
-            if (myPath.Count > 50)
+            /*if (myPath.Count > 50)
             {
                 myPath.RemoveAt(0);
-            }
+            }*/
 
             computeDistance();
             return myPath;
         }
 
-        public void computeDistance()
-        {
-            dist = 0;
-            for (int i = 0; i < myPath.Count-1; i++)
-            {
+        public void computeDistance() {
+
+            dist = 0.1f;
+            for (int i = lastPointInPath; i < myPath.Count - 1; i++) {
                 dist += Vector3.Distance(myPath[i], myPath[i + 1]);
             }
-        }        
+        }
 
         Vector3 createPerpendicularV(Vector3 a, Vector3 b) {
 
@@ -441,5 +449,5 @@ namespace UnityStandardAssets.Vehicles.Car {
 
     }
 }
-    
+
 

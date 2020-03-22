@@ -1,8 +1,7 @@
-﻿using System.Collections;
+﻿using MyGraph;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
-using System;
-using MyGraph;
 
 namespace UnityStandardAssets.Vehicles.Car {
     [RequireComponent(typeof(CarController))]
@@ -123,7 +122,6 @@ namespace UnityStandardAssets.Vehicles.Car {
 
                     Vector3 target = my_path[lastPointInPath + 1].getPosition();
                     float distanceToTargetTemp = Vector3.Distance(transform.position, target);
-                    int targetId = 0;
                     /*for (int i = lastPointInPath + 2; i < my_path.Count; i = i + 1)
                     {
                         float newDistance = Vector3.Distance(transform.position, my_path[i].getPosition());

@@ -1,11 +1,13 @@
-﻿using UnityEngine;
-using UnityEditor;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using MyGraph;
-using UnityStandardAssets.Vehicles.Car;
+﻿using MyGraph;
+using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using UnityEngine;
+using UnityStandardAssets.Vehicles.Car;
+using Vector3 = UnityEngine.Vector3;
+
 public class Planner1 {
 
     public List<HashSet<int>> sets = new List<HashSet<int>>();
@@ -55,8 +57,6 @@ public class Planner1 {
         List<List<int>> best_path = new List<List<int>>();
         List<List<int>> real_path = new List<List<int>>();
 
-        float best_cost = 99999999999;
-
         //watch = System.Diagnostics.Stopwatch.StartNew();
         // List<Vector3> points_to_visit = computeTargets(_terrain_manager);
         //Debug.Log("solution size: " + points_to_visit.Count.ToString());
@@ -73,38 +73,107 @@ public class Planner1 {
         List<int> path = new List<int>();
 
         List<int> point_of_interest = new List<int>();
-
+        List<int> car_indices = new List<int>();
         foreach (var car in friends) {
-            point_of_interest.Add(DroneGraph.FindClosestNode(car.transform.position, DroneGraph).getId());
+            car_indices.Add(DroneGraph.FindClosestNode(car.transform.position, DroneGraph).getId());
         }
         for (int i = 0; i < DroneGraph.getSize(); i++) {
+
             point_of_interest.Add(i);
         }
         watch = System.Diagnostics.Stopwatch.StartNew();
         Dictionary<Tuple<int, int>, float> CostMatrix = new Dictionary<Tuple<int, int>, float>();
         Dictionary<Tuple<int, int>, List<int>> PathMatrix = new Dictionary<Tuple<int, int>, List<int>>();
-        for (int i = 0; i < point_of_interest.Count; i++) {
-            for (int k = 0; k < point_of_interest.Count; k++) {
-                ASuperStar(DroneGraph, point_of_interest[i], point_of_interest[k]);
-                List<int> tmp_path = getBestPath(DroneGraph, point_of_interest[i], point_of_interest[k]);
-                PathMatrix[new Tuple<int, int>(point_of_interest[i], point_of_interest[k])] = new List<int>(tmp_path); // ADD To the real path, the path to get the ith point 
-                CostMatrix[new Tuple<int, int>(point_of_interest[i], point_of_interest[k])] = (computePathCost(DroneGraph, tmp_path));
+        /*
+                if (read_from_file == 1)
+                {
+                    using (StreamReader r = new StreamReader(@".\CostM.txt")) {
+
+                        CostMatrix = r.ReadToEnd();
+
+                    }
+                    using (StreamReader r = new StreamReader(@".\pathM.txt")) {
+                        PathMatrix = r.ReadToEnd();
+
+                    }
+
+                }*/
+        bool read_from_file = false;
+        string json = "";
+        if (read_from_file == true) {
+            json = System.IO.File.ReadAllText(@".\costM.json");
+            CostMatrix = JsonConvert.DeserializeObject<Dictionary<Tuple<int, int>, float>>(json);
+            json = System.IO.File.ReadAllText(@".\pathM.json");
+            PathMatrix = JsonConvert.DeserializeObject<Dictionary<Tuple<int, int>, List<int>>>(json);
+        } else {
+
+            for (int i = 0; i < point_of_interest.Count; i++) {
+                for (int k = 0; k < point_of_interest.Count; k++) {
+                    ASuperStar(DroneGraph, point_of_interest[i], point_of_interest[k]);
+                    List<int> tmp_path = getBestPath(DroneGraph, point_of_interest[i], point_of_interest[k]);
+                    PathMatrix[new Tuple<int, int>(point_of_interest[i], point_of_interest[k])] =
+                        new List<int>(tmp_path); // ADD To the real path, the path to get the ith point 
+                    CostMatrix[new Tuple<int, int>(point_of_interest[i], point_of_interest[k])] =
+                        (computePathCost(DroneGraph, tmp_path));
+                }
             }
+
+
+            foreach (int car in car_indices) {
+                point_of_interest.Remove(car);
+            }
+
+            json = JsonConvert.SerializeObject(PathMatrix);
+            File.WriteAllText(@".\pathM.json", json);
+            json = JsonConvert.SerializeObject(CostMatrix);
+            File.WriteAllText(@".\costM.json", json);
         }
+        /*
+                string PathM = JsonConvert.SerializeObject(PathMatrix.ToArray());
+                string CostM = JsonConvert.SerializeObject(CostMatrix.ToArray());
+
+                //write string to file
+                if (read_from_file == 0)
+
+                    using (StreamWriter str = new StreamWriter(isoStream))
+        {
+            str.Write(jsonFile);
+        }
+                {
+                    System.IO.File.WriteAllText(@".\pathM.txt", PathM);
+                    System.IO.File.WriteAllText(@".\CostM.txt", CostM);
+                }
+        */
+
+
         watch.Stop();
         elapsedMs = watch.Elapsed;
         Debug.Log("Time to precompute A Star" + elapsedMs.ToString());
-        int time = 0;
         /* Debug.Log("Printing points of interest");
          var strings = string.Join(", ", point_of_interest);
          Debug.Log(strings);*/
 
         List<List<int>> this_path = new List<List<int>>();
         watch = System.Diagnostics.Stopwatch.StartNew();
+        List<List<int>> clusters = findGreedyCluster(3, point_of_interest, CostMatrix, PathMatrix, DroneGraph);
+        //List<List<int>> greedyPath = new List<List<int>>();
+        foreach (var cluster in clusters) {
+            car_targets.Add(getClusterPath(DroneGraph, cluster, CostMatrix, PathMatrix));
+        }
+
+        List<int> toVisit = new List<int>();
+        for (int i = 0; i < 3; i++) {
+            car_targets[i].Insert(0, DroneGraph.FindClosestNode(friends[i].transform.position, DroneGraph).getId());
+            toVisit.AddRange(car_targets[i]);
+            //car_targets[i] = TabuSearch.RunTabuSearchSmall(1, car_targets[i], CostMatrix, PathMatrix, 200, 1000, 1000, car_indices[i])[0];
+
+        }
+
+        car_targets = TabuSearch.RunTabuSearch(3, toVisit, CostMatrix, PathMatrix, 200, 5000, 1000, car_indices);
+
+        watch.Stop();
 
 
-
-        car_targets = TabuSearch.RunTabuSearch(3, point_of_interest, CostMatrix, PathMatrix, 200, 200, 100);
         Debug.Log(car_targets.Count);
 
         List<float> this_cost = new List<float>();
@@ -136,8 +205,8 @@ public class Planner1 {
 
 
 
-    
-    watch.Stop();
+
+
         elapsedMs = watch.Elapsed;
         Debug.Log("Time for permutation " + elapsedMs.ToString());
 
@@ -365,10 +434,6 @@ public class Planner1 {
         LayerMask mask = LayerMask.GetMask("CubeWalls");
         float real_cost;
         float h_cost;
-        float actual_angle = 0;
-        float best_angle = 0;
-        float max_speed = 15;
-        float alpha = 1 / 10;
         float zero = 0;
         float k = 1 / zero;
 
@@ -433,7 +498,6 @@ public class Planner1 {
     }
 
     Graph generateGraph(Graph G) {
-        RaycastHit rayout;
         LayerMask mask = LayerMask.GetMask("CubeWalls");
         int col = terrain_manager.myInfo.x_N;
         int row = terrain_manager.myInfo.z_N;
@@ -472,7 +536,20 @@ public class Planner1 {
         }
         return idxList;
     }
-
+    List<int> getklusterNeighbor(Vector3 center, Graph G) {
+        List<Vector3> newPos = new List<Vector3> { center + new Vector3(20, 0, 0), center + new Vector3(-20, 0, 0), center + new Vector3(0, 0, 20), center + new Vector3(0, 0, -20), center + new Vector3(20, 0, 20), center + new Vector3(20, 0, -20), center + new Vector3(-20, 0, 20), center + new Vector3(-20, 0, -20) };
+        List<int> idxList = new List<int>();
+        Node n;
+        float distance;
+        foreach (var p in newPos) {
+            n = G.FindClosestNode(p, G);
+            distance = Vector3.Distance(n.getPosition(), p);
+            if (distance < 1) {
+                idxList.Add(n.getId());
+            }
+        }
+        return idxList;
+    }
 
     List<Vector3> computeTargets(TerrainManager _terrain_manager) {
         LayerMask mask = LayerMask.GetMask("CubeWalls");
@@ -548,9 +625,6 @@ public class Planner1 {
                     missingPoints.Remove(x);
                 }
             } else {
-                int best_i;
-                int best_j;
-                int best_score = 0;
                 for (int i = 0; i < sets.Count; i++) {
                     List<int> tmp_list = new List<int>(sets[i]);
                     if (sets[i].Count == 0) { continue; }
@@ -643,6 +717,147 @@ public class Planner1 {
         myList[3] = center + new Vector3(-x, 0, -z);
 
         return myList;
+
+    }
+
+    List<List<int>> findGreedyCluster(int amountOfCars, List<int> nodeList,
+        Dictionary<Tuple<int, int>, float> CostMatrix, Dictionary<Tuple<int, int>, List<int>> PathMatrix, Graph G) {
+        List<int> toVisit = new List<int>(nodeList);
+        List<List<int>> cars_clusters = new List<List<int>>();
+        List<int> starts = getInitialCluster(amountOfCars, nodeList, CostMatrix, PathMatrix, G);
+        cars_clusters.Add(new List<int>());
+        cars_clusters.Add(new List<int>());
+        cars_clusters.Add(new List<int>());
+        cars_clusters[0].Add(starts[0]);
+        cars_clusters[1].Add(starts[1]);
+        cars_clusters[2].Add(starts[2]);
+
+        while (toVisit.Count > 0) {
+            for (int i = 0; i < amountOfCars; i++) {
+                int newPoint = getNewElement(G, cars_clusters[i], toVisit);
+                if (newPoint != -1) {
+
+                    cars_clusters[i].Add(newPoint);
+                    toVisit.Remove(newPoint);
+                }
+
+            }
+        }
+
+        return cars_clusters;
+    }
+
+    List<int> getInitialCluster(int amountOfCars, List<int> nodeList, Dictionary<Tuple<int, int>, float> CostMatrix,
+        Dictionary<Tuple<int, int>, List<int>> PathMatrix, Graph G) {
+        List<int> shortList = new List<int>();
+
+        foreach (int p in nodeList) {
+            if (G.getNode(p).getPositionX() == 80 || G.getNode(p).getPositionX() == 420 ||
+                G.getNode(p).getPositionZ() == 80 || G.getNode(p).getPositionX() == 420) {
+                shortList.Add(p);
+            }
+        }
+
+        List<int> bestSet = new List<int>();
+        bestSet.Add(0);
+        bestSet.Add(1);
+        bestSet.Add(2);
+        float bestScore = 0;
+        List<int> thisSet = new List<int>();
+        float thisScore = 0;
+
+        // This should be done by recursion!!!! 
+        for (int i = 0; i < shortList.Count; i++) {
+            for (int j = 0; j < shortList.Count; j++) {
+                for (int k = 0; k < shortList.Count; k++) {
+                    thisScore = Vector3.Distance(G.getNode(i).getPosition(), G.getNode(j).getPosition()) +
+                                Vector3.Distance(G.getNode(j).getPosition(), G.getNode(k).getPosition()) +
+                                Vector3.Distance(G.getNode(k).getPosition(), G.getNode(i).getPosition());
+                    if (thisScore > bestScore) {
+                        bestScore = thisScore;
+                        bestSet[0] = i;
+                        bestSet[1] = j;
+                        bestSet[2] = k;
+                    }
+                }
+            }
+        }
+
+        return bestSet;
+    }
+
+
+    int getNewElement(Graph G, List<int> cluster, List<int> freePoints) {
+        List<int> neighbor;
+        int bestChild = -1;
+        int childScore;
+
+        int bestChildScore = 0;
+        foreach (int p in freePoints) {
+            neighbor = getklusterNeighbor(G.getNode(p).getPosition(), G);
+            childScore = 0;
+            foreach (int pp in neighbor) {
+                if (cluster.Contains(pp)) {
+                    childScore++;
+                }
+            }
+
+            if (bestChildScore < childScore) {
+                bestChild = p;
+                bestChildScore = childScore;
+            } else if (bestChildScore == childScore) {
+                UnityEngine.Random.seed = System.DateTime.Now.Millisecond;
+                int rand = UnityEngine.Random.Range(0, 10);
+                if (rand > 7) {
+                    bestChild = p;
+                }
+            }
+        }
+
+        if (bestChildScore == 0) {
+            return -1;
+        }
+
+        return bestChild;
+
+    }
+
+    List<int> getClusterPath(Graph G, List<int> cluster, Dictionary<Tuple<int, int>, float> CostMatrix,
+        Dictionary<Tuple<int, int>, List<int>> PathMatrix) {
+        List<int> path = new List<int>();
+        int bestStart = -1;
+        int bestScore = 4;
+        foreach (int p in cluster) {
+            int count = getNeighbor(G.getNode(p).getPosition(), G).Count;
+            if (count < bestScore) {
+                bestScore = count;
+                bestStart = p;
+            }
+        }
+
+        int position = bestStart;
+        path.Add(position);
+        List<int> toVisit = new List<int>(cluster);
+
+        while (toVisit.Count > 0) {
+            float minCost = 999999999;
+            float cost;
+            int bestCandidate = -1;
+            foreach (int p in toVisit) {
+                cost = CostMatrix[new Tuple<int, int>(position, p)];
+                if (minCost > cost) {
+                    minCost = cost;
+                    bestCandidate = p;
+                }
+            }
+            path.Add(bestCandidate);
+            position = bestCandidate;
+            toVisit.Remove(bestCandidate);
+
+        }
+
+        path.Reverse();
+        return path;
 
     }
 }

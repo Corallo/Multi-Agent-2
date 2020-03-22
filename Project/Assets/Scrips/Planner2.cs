@@ -1,14 +1,11 @@
-﻿using UnityEngine;
-using UnityEditor;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using MyGraph;
-using UnityStandardAssets.Vehicles.Car;
+﻿using MyGraph;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
-using static TabuSearch;
+using UnityEngine;
+using UnityStandardAssets.Vehicles.Car;
 public class Planner2 {
 
     public List<HashSet<int>> sets = new List<HashSet<int>>();
@@ -57,8 +54,6 @@ public class Planner2 {
         /* GENERATE PERMUTATION OF INTERESTING NODES */
         List<List<int>> best_path = new List<List<int>>();
 
-        float best_cost = 99999999999;
-
         watch = System.Diagnostics.Stopwatch.StartNew();
         List<Vector3> points_to_visit = computeTargets(_terrain_manager);
         Debug.Log("solution size: " + points_to_visit.Count.ToString());
@@ -96,7 +91,6 @@ public class Planner2 {
         watch.Stop();
         elapsedMs = watch.Elapsed;
         Debug.Log("Time to precompute A Star" + elapsedMs.ToString());
-        int time = 0;
         /* Debug.Log("Printing points of interest");
          var strings = string.Join(", ", point_of_interest);
          Debug.Log(strings);*/
@@ -106,53 +100,53 @@ public class Planner2 {
 
 
 
-            car_targets = TabuSearch.RunTabuSearch(3, point_of_interest, CostMatrix, PathMatrix, 100, 1000, 100);
-            Debug.Log(car_targets.Count);
-            
-            List<float> this_cost = new List<float>();
-            this_path.Clear();
-            for (int c = 0; c < NUMBER_OF_CARS; c++) { //For all the car 
-                path.Clear();
-                Debug.Log(car_targets[c].Count);
-                if (car_targets[c].Count == 1) {
-                    path.Add(car_targets[c][0]);
-                }
-                for (int i = 0; i < car_targets[c].Count - 1; i++) {        //for all the interesting points of that car   
+        car_targets = OldTabuSearch.RunTabuSearch(3, point_of_interest, CostMatrix, PathMatrix, 100, 1000, 100);
+        Debug.Log(car_targets.Count);
 
-                    start_idx = car_targets[c][i];
-                    goal_idx = car_targets[c][i + 1];
-                    path.AddRange(PathMatrix[new Tuple<int, int>(start_idx, goal_idx)]);
-                }
-                this_path.Add(new List<int>(path)); //copy the path
-                                                    //Debug.Log(this_cost[c]);
+        List<float> this_cost = new List<float>();
+        this_path.Clear();
+        for (int c = 0; c < NUMBER_OF_CARS; c++) { //For all the car 
+            path.Clear();
+            Debug.Log(car_targets[c].Count);
+            if (car_targets[c].Count == 1) {
+                path.Add(car_targets[c][0]);
             }
+            for (int i = 0; i < car_targets[c].Count - 1; i++) {        //for all the interesting points of that car   
 
-            /*  Debug.Log("Cost for this path:" + real_cost.ToString());
-              foreach (var l in this_path)
-              {
-                  strings = string.Join(", ", l);
-                  Debug.Log(strings);
-              }*/
+                start_idx = car_targets[c][i];
+                goal_idx = car_targets[c][i + 1];
+                path.AddRange(PathMatrix[new Tuple<int, int>(start_idx, goal_idx)]);
+            }
+            this_path.Add(new List<int>(path)); //copy the path
+                                                //Debug.Log(this_cost[c]);
+        }
 
-            best_path = new List<List<int>>(this_path);
-            
+        /*  Debug.Log("Cost for this path:" + real_cost.ToString());
+          foreach (var l in this_path)
+          {
+              strings = string.Join(", ", l);
+              Debug.Log(strings);
+          }*/
 
-            /*
-            // Block of code to hopefully remove consecutive duplicates of nodes in the path that might cause issues.
-            foreach (var List in best_path)
+        best_path = new List<List<int>>(this_path);
+
+
+        /*
+        // Block of code to hopefully remove consecutive duplicates of nodes in the path that might cause issues.
+        foreach (var List in best_path)
+        {
+            for (int i = List.Count - 2; i >= 0; i--)
             {
-                for (int i = List.Count - 2; i >= 0; i--)
+                if (List[i] == List[i + 1])
                 {
-                    if (List[i] == List[i + 1])
-                    {
-                        List.RemoveAt(i);
-                    }
+                    List.RemoveAt(i);
                 }
             }
-            */
+        }
+        */
 
 
-        
+
         watch.Stop();
         elapsedMs = watch.Elapsed;
         Debug.Log("Time for permutation " + elapsedMs.ToString());
@@ -358,10 +352,6 @@ public class Planner2 {
         LayerMask mask = LayerMask.GetMask("CubeWalls");
         float real_cost;
         float h_cost;
-        float actual_angle = 0;
-        float best_angle = 0;
-        float max_speed = 15;
-        float alpha = 1 / 10;
         float zero = 0;
         float k = 1 / zero;
 
@@ -527,9 +517,6 @@ public class Planner2 {
                     missingPoints.Remove(x);
                 }
             } else {
-                int best_i;
-                int best_j;
-                int best_score = 0;
                 for (int i = 0; i < sets.Count; i++) {
                     List<int> tmp_list = new List<int>(sets[i]);
                     if (sets[i].Count == 0) { continue; }
@@ -559,18 +546,16 @@ public class Planner2 {
 
     List<int> findBestSet() {
         var stringBuilder = new StringBuilder();
-        int q = 0;
-        foreach (var arrayElement in sets)
-        {
-            
+        foreach (var arrayElement in sets) {
+
             var strings = string.Join(", ", arrayElement);
             stringBuilder.AppendLine(strings);
         }
 
         File.AppendAllText(@"C:\Users\delli\Desktop\array.txt", stringBuilder.ToString());
 
-        
-        
+
+
         List<int> bestset = new List<int>();
         HashSet<int> missingPoints = new HashSet<int>();
 

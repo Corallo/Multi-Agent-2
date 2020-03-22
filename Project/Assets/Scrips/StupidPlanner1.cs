@@ -1,11 +1,8 @@
-﻿using UnityEngine;
-using UnityEditor;
-using System.Collections;
+﻿using MyGraph;
 using System.Collections.Generic;
 using System.Linq;
-using MyGraph;
+using UnityEngine;
 using UnityStandardAssets.Vehicles.Car;
-using System;
 public class StupidPlanner1 {
 
     public List<HashSet<int>> sets = new List<HashSet<int>>();
@@ -44,7 +41,7 @@ public class StupidPlanner1 {
             cube.transform.position = new Vector3(position.x, 1, position.z);
             cube.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
             for (int k = 0; k < DroneGraph.getAdjList(i).Count; k++) {
-                 Debug.DrawLine(DroneGraph.getNode(i).getPosition(), DroneGraph.getNode(DroneGraph.getAdjList(i)[k]).getPosition(), Color.yellow, 1f);
+                Debug.DrawLine(DroneGraph.getNode(i).getPosition(), DroneGraph.getNode(DroneGraph.getAdjList(i)[k]).getPosition(), Color.yellow, 1f);
             }
 
         }
@@ -58,7 +55,7 @@ public class StupidPlanner1 {
         double best_cost = 99999999999;
 
         //watch = System.Diagnostics.Stopwatch.StartNew();
-       // List<Vector3> points_to_visit = computeTargets(_terrain_manager);
+        // List<Vector3> points_to_visit = computeTargets(_terrain_manager);
         //Debug.Log("solution size: " + points_to_visit.Count.ToString());
         //watch.Stop();
         //elapsedMs = watch.Elapsed;
@@ -128,12 +125,12 @@ public class StupidPlanner1 {
                     //ASuperStar(DroneGraph, start_idx, goal_idx);
                     //path.AddRange(getBestPath(DroneGraph, start_idx, goal_idx)); // ADD To the real path, the path to get the ith point 
                     //path.AddRange(PathMatrix[new Tuple<int, int>(start_idx, goal_idx)]);
-                   // this_cost[this_cost.Count - 1] += CostMatrix[new Tuple<int, int>(start_idx, goal_idx)];
-                   
+                    // this_cost[this_cost.Count - 1] += CostMatrix[new Tuple<int, int>(start_idx, goal_idx)];
+
                 }
-                this_cost.Add(computemanhattnCost(car_targets[c],DroneGraph));
+                this_cost.Add(computemanhattnCost(car_targets[c], DroneGraph));
                 //this_path.Add(new List<int>(path)); //copy the path
-                                                    //Debug.Log(this_cost[c]);
+                //Debug.Log(this_cost[c]);
             }
             double real_cost = this_cost.Max();
 
@@ -251,7 +248,7 @@ public class StupidPlanner1 {
 
     }
 
-    double computemanhattnCost(List<int> path,Graph G) {
+    double computemanhattnCost(List<int> path, Graph G) {
         double cost = 0;
         for (int i = 0; i < path.Count - 1; i++) {
             Vector3 a = G.getNode(i).getPosition();
@@ -393,10 +390,6 @@ public class StupidPlanner1 {
         LayerMask mask = LayerMask.GetMask("CubeWalls");
         float real_cost;
         float h_cost;
-        float actual_angle = 0;
-        float best_angle = 0;
-        float max_speed = 15;
-        float alpha = 1 / 10;
         float zero = 0;
         float k = 1 / zero;
 
@@ -461,7 +454,6 @@ public class StupidPlanner1 {
     }
 
     Graph generateGraph(Graph G) {
-        RaycastHit rayout;
         LayerMask mask = LayerMask.GetMask("CubeWalls");
         int col = terrain_manager.myInfo.x_N;
         int row = terrain_manager.myInfo.z_N;
@@ -478,10 +470,10 @@ public class StupidPlanner1 {
             Vector3 center = G.getNode(i).getPosition();
             List<int> neighbor = getNeighbor(center, G);
             foreach (int p in neighbor) {
-               G.addEdge(p, i);
-             }
-                
-            
+                G.addEdge(p, i);
+            }
+
+
         }
         return G;
     }
@@ -491,10 +483,10 @@ public class StupidPlanner1 {
         List<int> idxList = new List<int>();
         Node n;
         double distance;
-        foreach(var p in newPos) {
-            n =G.FindClosestNode(p, G);
-            distance=Vector3.Distance(n.getPosition(), p);
-            if(distance < 1) {
+        foreach (var p in newPos) {
+            n = G.FindClosestNode(p, G);
+            distance = Vector3.Distance(n.getPosition(), p);
+            if (distance < 1) {
                 idxList.Add(n.getId());
             }
         }
@@ -576,9 +568,6 @@ public class StupidPlanner1 {
                     missingPoints.Remove(x);
                 }
             } else {
-                int best_i;
-                int best_j;
-                int best_score = 0;
                 for (int i = 0; i < sets.Count; i++) {
                     List<int> tmp_list = new List<int>(sets[i]);
                     if (sets[i].Count == 0) { continue; }
