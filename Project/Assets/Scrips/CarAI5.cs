@@ -219,7 +219,7 @@ namespace UnityStandardAssets.Vehicles.Car {
                 stopPhase = 10;
             }*/
 
-            if (lastPointInPath > my_path_length - (2*(stopPhase+4))) // maybe last 5 points
+            if (lastPointInPath > my_path_length - (stopPhase+4)) // maybe last 5 points
             {
                 
 
