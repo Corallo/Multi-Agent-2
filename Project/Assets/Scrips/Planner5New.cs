@@ -676,14 +676,7 @@ public class Planner5New {
                 }
             }
         }
-        size = G.getSize();
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
-                if (i != j && Vector3.Distance(G.getNode(i).getPosition(), G.getNode(j).getPosition()) < 6f) {
-                    G.addNode(new Node((G.getNode(i).getPosition() + G.getNode(j).getPosition()) / 2));
-                }
-            }
-        }
+
         /* int density = 5;
          float margin = 5;
          for (int i = (int)terrain_manager.myInfo.x_low + 10; i < (int)terrain_manager.myInfo.x_high; i += density) {
@@ -719,7 +712,7 @@ public class Planner5New {
         return false;
     }
     List<int> getNeighbor(Vector3 center, Graph G) {
-        float dist = 2.5f;
+        float dist = 5f;
         List<Vector3> newPos = new List<Vector3> { center + new Vector3(dist, 0, 0), center + new Vector3(-dist, 0, 0), center + new Vector3(0, 0, dist), center + new Vector3(0, 0, -dist) };
         List<int> idxList = new List<int>();
         Node n;
