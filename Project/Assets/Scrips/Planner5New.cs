@@ -102,12 +102,12 @@ public class Planner5New {
         watch = System.Diagnostics.Stopwatch.StartNew();
         Dictionary<Tuple<int, int>, float> CostMatrix = new Dictionary<Tuple<int, int>, float>();
         Dictionary<Tuple<int, int>, List<int>> PathMatrix = new Dictionary<Tuple<int, int>, List<int>>();
-        int startNode = DroneGraph.FindClosestNode(friends[0].transform.position, DroneGraph).getId();
+        
         List<List<int>> possiblePaths = new List<List<int>>();
         List<int> tmp_path = new List<int>();
         computeDanger(DroneGraph);
-
         smoothDanger(DroneGraph);
+        int startNode = DroneGraph.FindClosestSafeNode(friends[0].transform.position, DroneGraph).getId();
 
 
         for (int i = 0; i < DroneGraph.getSize(); i++)
@@ -399,14 +399,23 @@ public class Planner5New {
          friends[0].GetComponent<CarAI5>().leaderOffset = 0f;
      }
      */
-}
+
+    int safe = checkSafety(my_path);
+    foreach (var car in friends)
+    {
+        car.GetComponent<CarAI5>().safe = safe;
+    }
+
+
+    }
 
     //REMEMBER TO SET THE COLOR AT 0 AT THE BEGINING 
     public void DfS(Graph G, int position, List<List<int>> solutions, List<int> tmp_path, bool found) {
         tmp_path.Add(position);
         G.setColorOfNode(position, 1);
-       if(DfsStopwatch.ElapsedMilliseconds>1000)// if (solutions.Count > 1000)
+       if(DfsStopwatch.ElapsedMilliseconds>1000 && solutions.Count>=1)// if (solutions.Count > 1000)
         {
+            G.setColorOfNode(position, 0);
             return;
         }
         if (G.getNode(position).getDanger() >= 1) { //END 
@@ -676,7 +685,6 @@ public class Planner5New {
                 }
             }
         }
-
         /* int density = 5;
          float margin = 5;
          for (int i = (int)terrain_manager.myInfo.x_low + 10; i < (int)terrain_manager.myInfo.x_high; i += density) {
@@ -960,5 +968,30 @@ public class Planner5New {
         yellow_angle = Vector3.Angle(lastevil.transform.position - pos2,
             pos - pos2);
         return yellow_angle;
+    }
+
+    int checkSafety(List<Node> path)
+    {
+
+        Vector3 brownVector = path[path.Count - 3].getPosition() - path[path.Count - 2].getPosition();
+        Vector3 middle = path[path.Count - 2].getPosition() + (5.0f / 8.0f) * brownVector;
+
+            var turret_mask = LayerMask.GetMask("CubeWalls");
+        int safe = 0;
+        foreach (var enemy in enemies)
+        {
+            if (!Physics.Raycast(enemy.transform.position,
+                middle - enemy.transform.position,
+                Vector3.Distance(enemy.transform.position, middle), //it was my_path[my_path_length - 1]
+                turret_mask))
+            {
+
+                // Debug.DrawLine(enemy.transform.position, my_path[lastPointInPath + 1].getPosition(),Color.yellow,100);
+                safe = 1;
+                break;
+            }
+        }
+
+        return safe;
     }
 }

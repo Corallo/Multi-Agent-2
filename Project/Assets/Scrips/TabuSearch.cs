@@ -87,7 +87,7 @@ public static class TabuSearch {
             foreach (var candidate in children) {
 
                 float childCost = fitness(candidate, CostMatrix);
-                if ((!contains(tabuCostList, tabuList, childCost, candidate)) && childCost < bestCandidateScore) {
+                if (childCost < bestCandidateScore && (!contains(tabuCostList, tabuList, childCost, candidate))) {
                     bestCandidate = candidate; //DELETED THE NEW FROM HERE
                     bestCandidateScore = childCost;
                 }

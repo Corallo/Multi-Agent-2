@@ -15,11 +15,11 @@ public class TerrainManager : MonoBehaviour {
     public GameObject flag;
     public bool done;
     public GameObject[] enemies;
-    private Planner5New p;
+    private Planner1 p;
     // Use this for initialization
     void Start() {
-        p = new Planner5New(); //CHANGE PlannerX for assignment X!!!
-        p.setEnemyNumber(this);
+        p = new Planner1(); //CHANGE PlannerX for assignment X!!!
+        //p.setEnemyNumber(this);
         p.ComputePath(this);
     }
 
@@ -51,13 +51,14 @@ public class TerrainManager : MonoBehaviour {
 
     // Update is called once per frame
     void Update() {
-
+        /*
         enemies = GameObject.FindGameObjectsWithTag("Enemy");
         //Planner5 p = new Planner5(); //CHANGE PlannerX for assignment X!!!
         if (enemies.Length > 0)
         {
             p.checkReplan(this);
         }
+        */
     }
 }
 

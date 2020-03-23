@@ -182,23 +182,40 @@ namespace MyGraph {
 
 
 
-		public Node FindClosestNode(Vector3 target, Graph G) {
+        public Node FindClosestNode(Vector3 target, Graph G) {
 
-			Node temp;
-			Node closest = nodes[0];//root
-			float closestDistance = Vector3.Distance(closest.getPosition(), target);
-			float checkDistance = 0f;
+            Node temp;
+            Node closest = nodes[0];//root
+            float closestDistance = Vector3.Distance(closest.getPosition(), target);
+            float checkDistance = 0f;
 
-			for (int i = 0; i < G.getSize(); i++) {
-				temp = G.getNode(i);
-				checkDistance = Vector3.Distance(temp.getPosition(), target);
-				if (checkDistance < closestDistance) {
-					closestDistance = checkDistance;
-					closest = temp;
-				}
-			}
-			return closest;
-		}
+            for (int i = 0; i < G.getSize(); i++) {
+                temp = G.getNode(i);
+                checkDistance = Vector3.Distance(temp.getPosition(), target);
+                if (checkDistance < closestDistance) {
+                    closestDistance = checkDistance;
+                    closest = temp;
+                }
+            }
+            return closest;
+        }
+        public Node FindClosestSafeNode(Vector3 target, Graph G) {
+
+            Node temp;
+            Node closest = nodes[0];//root
+            float closestDistance = Vector3.Distance(closest.getPosition(), target);
+            float checkDistance = 0f;
+
+            for (int i = 0; i < G.getSize(); i++) {
+                temp = G.getNode(i);
+                checkDistance = Vector3.Distance(temp.getPosition(), target);
+                if (checkDistance < closestDistance && temp.getDanger()==0) { //or <1
+                    closestDistance = checkDistance;
+                    closest = temp;
+                }
+            }
+            return closest;
+        }
 
 
 	}

@@ -1,6 +1,7 @@
 ﻿using MyGraph;
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.Networking.NetworkSystem;
 
@@ -57,6 +58,8 @@ namespace UnityStandardAssets.Vehicles.Car {
         public int stuckChecker;
         public Vector3 position;
         public int unstuckRun;
+        public int safe;
+        public int maxSpeed;
         private void Start()
         {
 
@@ -70,6 +73,7 @@ namespace UnityStandardAssets.Vehicles.Car {
             run = 0;
             stuckChecker = 1000;
             unstuckRun = 0;
+            maxSpeed = 8;
         }
 
 
@@ -113,20 +117,25 @@ namespace UnityStandardAssets.Vehicles.Car {
                 return;
 
             }
-            /*
-            if (wait > 0)
+            
+            if (wait > 0 && wait%2==0)
             {
                 wait--;
-                m_Car.Move(0f, 0f, 0f, 1f);
+                m_Car.Move(0f, 1f, 0f, 0f);
                 return;
             }
-            
+            if (wait > 0 && wait % 2 == 1) {
+                wait--;
+                m_Car.Move(0f, 0f, -1f, 0f);
+                return;
+            }
+            /*
             if (wait == 0)
             {
                 m_Car.Move(0f, 0f, 0f, -1f);
                 wait--;
-            }
-            */
+            }*/
+
             /*
             if (stuckChecker == 0)
             {
@@ -219,7 +228,7 @@ namespace UnityStandardAssets.Vehicles.Car {
                 stopPhase = 10;
             }*/
 
-            if (lastPointInPath > my_path_length - (stopPhase+4)) // maybe last 5 points
+            if (lastPointInPath > my_path_length - ((stopPhase+4+safe))) // maybe last 5 points
             {
                 
 
@@ -238,8 +247,20 @@ namespace UnityStandardAssets.Vehicles.Car {
 
             }
 
-          
-
+            maxSpeed = 8;
+            if (lastPointInPath != -1 && lastPointInPath+10 < my_path_length)
+            {
+                maxSpeed = 20;
+                Vector3 longVector = my_path[lastPointInPath].getPosition() - my_path[lastPointInPath + 10].getPosition();
+                for (i = lastPointInPath+1; i < lastPointInPath + 10; i++)
+                {
+                    if (Vector3.Angle(my_path[lastPointInPath].getPosition() - my_path[i].getPosition(), longVector) >   1f && 
+                        Vector3.Angle(my_path[lastPointInPath].getPosition() - my_path[i].getPosition(), longVector) < 179f)
+                    {
+                        maxSpeed = 8;
+                    }
+                }
+            }
 
             Vector3 carToTarget = transform.InverseTransformPoint(target);
             float newSteer = (carToTarget.x / carToTarget.magnitude);
@@ -258,7 +279,7 @@ namespace UnityStandardAssets.Vehicles.Car {
             {
                 // EQUAL TO DISTANCE OF NODES
 
-                if (lastPointInPath < my_path.Count - 2)
+                if (lastPointInPath < my_path.Count - (2+safe) )
                 {
                     allowNewPoint = true;
                    /* foreach (var friend in friends)
@@ -397,7 +418,7 @@ namespace UnityStandardAssets.Vehicles.Car {
     
                 */
 
-                if (controller.CurrentSpeed > 8) //10*((health/200)+1)) //Default 20
+                if (controller.CurrentSpeed > maxSpeed) //10*((health/200)+1)) //Default 20
                 {
                     Debug.Log(myIdx.ToString() + " Slowing down");
                     newSpeed = 0;
@@ -444,9 +465,9 @@ namespace UnityStandardAssets.Vehicles.Car {
             carVelocity = transform.InverseTransformPoint(vel);
             orientation = Vector3.Dot(steeringPoint, vel);
 
-           
+            //safe = 0;
 
-            if (lastPointInPath >= my_path_length - stopPhase)
+            if (lastPointInPath >= my_path_length - (stopPhase+safe))
             {
                 if (orientation > 0 && carToTarget.magnitude < 10f) //Default 20  !(carToMean.z > 0.1)  
                 {

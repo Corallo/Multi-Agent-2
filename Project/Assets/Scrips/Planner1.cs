@@ -18,7 +18,9 @@ public class Planner1 {
     private CarController m_Car;
     //public LayerMask mask;
     private float Margin = 0;
-    public void ComputePath(TerrainManager _terrain_manager) {
+
+    public void ComputePath(TerrainManager _terrain_manager)
+    {
         terrain_manager = _terrain_manager.GetComponent<TerrainManager>();
         Graph DroneGraph = new Graph();
         var watch = System.Diagnostics.Stopwatch.StartNew();
@@ -36,7 +38,8 @@ public class Planner1 {
 
         LayerMask mask = LayerMask.GetMask("CubeWalls");
 
-        for (int i = 0; i < DroneGraph.getSize(); i++) {
+        for (int i = 0; i < DroneGraph.getSize(); i++)
+        {
             GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
             Collider c = cube.GetComponent<Collider>();
             c.enabled = false;
@@ -45,8 +48,10 @@ public class Planner1 {
 
             cube.transform.position = new Vector3(position.x, 1, position.z);
             cube.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
-            for (int k = 0; k < DroneGraph.getAdjList(i).Count; k++) {
-                Debug.DrawLine(DroneGraph.getNode(i).getPosition(), DroneGraph.getNode(DroneGraph.getAdjList(i)[k]).getPosition(), Color.yellow, 1f);
+            for (int k = 0; k < DroneGraph.getAdjList(i).Count; k++)
+            {
+                Debug.DrawLine(DroneGraph.getNode(i).getPosition(),
+                    DroneGraph.getNode(DroneGraph.getAdjList(i)[k]).getPosition(), Color.yellow, 1f);
             }
 
         }
@@ -74,13 +79,17 @@ public class Planner1 {
 
         List<int> point_of_interest = new List<int>();
         List<int> car_indices = new List<int>();
-        foreach (var car in friends) {
+        foreach (var car in friends)
+        {
             car_indices.Add(DroneGraph.FindClosestNode(car.transform.position, DroneGraph).getId());
         }
-        for (int i = 0; i < DroneGraph.getSize(); i++) {
+
+        for (int i = 0; i < DroneGraph.getSize(); i++)
+        {
 
             point_of_interest.Add(i);
         }
+
         watch = System.Diagnostics.Stopwatch.StartNew();
         Dictionary<Tuple<int, int>, float> CostMatrix = new Dictionary<Tuple<int, int>, float>();
         Dictionary<Tuple<int, int>, List<int>> PathMatrix = new Dictionary<Tuple<int, int>, List<int>>();
@@ -100,15 +109,20 @@ public class Planner1 {
                 }*/
         bool read_from_file = false;
         string json = "";
-        if (read_from_file == true) {
+        if (read_from_file == true)
+        {
             json = System.IO.File.ReadAllText(@".\costM.json");
             CostMatrix = JsonConvert.DeserializeObject<Dictionary<Tuple<int, int>, float>>(json);
             json = System.IO.File.ReadAllText(@".\pathM.json");
             PathMatrix = JsonConvert.DeserializeObject<Dictionary<Tuple<int, int>, List<int>>>(json);
-        } else {
+        }
+        else
+        {
 
-            for (int i = 0; i < point_of_interest.Count; i++) {
-                for (int k = 0; k < point_of_interest.Count; k++) {
+            for (int i = 0; i < point_of_interest.Count; i++)
+            {
+                for (int k = 0; k < point_of_interest.Count; k++)
+                {
                     ASuperStar(DroneGraph, point_of_interest[i], point_of_interest[k]);
                     List<int> tmp_path = getBestPath(DroneGraph, point_of_interest[i], point_of_interest[k]);
                     PathMatrix[new Tuple<int, int>(point_of_interest[i], point_of_interest[k])] =
@@ -119,7 +133,8 @@ public class Planner1 {
             }
 
 
-            foreach (int car in car_indices) {
+            foreach (int car in car_indices)
+            {
                 point_of_interest.Remove(car);
             }
 
@@ -157,23 +172,35 @@ public class Planner1 {
         watch = System.Diagnostics.Stopwatch.StartNew();
         List<List<int>> clusters = findGreedyCluster(3, point_of_interest, CostMatrix, PathMatrix, DroneGraph);
         //List<List<int>> greedyPath = new List<List<int>>();
-        foreach (var cluster in clusters) {
+        foreach (var cluster in clusters)
+        {
             car_targets.Add(getClusterPath(DroneGraph, cluster, CostMatrix, PathMatrix));
         }
 
         List<int> toVisit = new List<int>();
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 3; i++)
+        {
             car_targets[i].Insert(0, DroneGraph.FindClosestNode(friends[i].transform.position, DroneGraph).getId());
-            toVisit.AddRange(car_targets[i]);
-            //car_targets[i] = TabuSearch.RunTabuSearchSmall(1, car_targets[i], CostMatrix, PathMatrix, 200, 1000, 1000, car_indices[i])[0];
-
         }
 
-        car_targets = TabuSearch.RunTabuSearch(3, toVisit, CostMatrix, PathMatrix, 200, 5000, 1000, car_indices);
+        for (int qqq = 0; qqq < 10; qqq++)
+         {
+        for (int i = 0; i < 3; i++)
+        {
+            //car_targets[i].Insert(0, DroneGraph.FindClosestNode(friends[i].transform.position, DroneGraph).getId());
+            car_targets[i] =
+                TabuSearch.RunTabuSearchSmall(1, car_targets[i], CostMatrix, PathMatrix, 200, 100, 1000)
+                    [0]; //, car_indices[i]
+            toVisit.AddRange(car_targets[i]);
+        }
+        
 
-        watch.Stop();
+        car_targets = TabuSearch.RunTabuSearch(3, toVisit, CostMatrix, PathMatrix, 500, 1000, 1000, car_indices);
+    }
 
-
+    watch.Stop();
+        elapsedMs = watch.Elapsed;
+        Debug.Log("Time to compute tabu search" + elapsedMs.ToString());
         Debug.Log(car_targets.Count);
 
         List<float> this_cost = new List<float>();
